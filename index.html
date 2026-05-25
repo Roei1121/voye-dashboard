@@ -271,13 +271,13 @@ function App() {
                             {cp ? <span style={{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:cheaper?'#F87171':pricier?'#4ADE80':'#64748B'}}>${cp.toFixed(2)}</span> : <span style={{color:'#2D3748',fontSize:11}}>—</span>}
                           </td>
                         );
-                      }}
+                      })}
                       <td style={{padding:'10px 16px',textAlign:'right'}}>
                         {posPct !== null ? <Pill cls={posPct>10?'dn':posPct<-10?'up':'na'} text={`${posPct>0?'+':''}${posPct}%`} /> : <span style={{color:'#2D3748',fontSize:11}}>—</span>}
                       </td>
                     </tr>
                   );
-                }}
+                })}
               </tbody>
             </table>
           </div>
