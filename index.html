@@ -30,6 +30,12 @@ const N_DN=42;
 const N_CHANGES=186;
 const N_COUNTRIES=162;
 const N_PLANS=1073;
+const N_CHEAPER=541;
+const N_PRICIER=466;
+const N_NEEDS_UPDATE=386;
+const STRONG_MARKETS=[{"country":"Belarus","adv":64,"plans":3},{"country":"Guam","adv":61,"plans":4},{"country":"North Macedonia","adv":52,"plans":3},{"country":"Maldives","adv":45,"plans":4},{"country":"India","adv":43,"plans":10},{"country":"Georgia","adv":42,"plans":4},{"country":"Switzerland","adv":38,"plans":10},{"country":"Malta","adv":37,"plans":10},{"country":"Slovenia","adv":37,"plans":10},{"country":"China","adv":35,"plans":10},{"country":"Slovakia","adv":34,"plans":9},{"country":"Malaysia","adv":33,"plans":10}];
+const WEAK_MARKETS=[{"country":"Congo","adv":-288,"plans":2},{"country":"Tanzania","adv":-188,"plans":2},{"country":"Ghana","adv":-174,"plans":2},{"country":"Bosnia and Herzegovina","adv":-161,"plans":4},{"country":"Cameroon","adv":-156,"plans":2},{"country":"Nepal","adv":-152,"plans":1},{"country":"Zambia","adv":-138,"plans":2},{"country":"Martinique","adv":-137,"plans":10},{"country":"Uganda","adv":-136,"plans":2},{"country":"Brunei","adv":-134,"plans":2},{"country":"Costa Rica","adv":-130,"plans":2},{"country":"Fiji","adv":-102,"plans":2}];
+const RECENT_UPDATES=[{"country":"United States","changed":10,"total":17,"pct":59},{"country":"Portugal","changed":9,"total":10,"pct":90},{"country":"Netherlands","changed":9,"total":10,"pct":90},{"country":"Italy","changed":9,"total":10,"pct":90},{"country":"Hungary","changed":9,"total":10,"pct":90},{"country":"Greece","changed":9,"total":10,"pct":90},{"country":"Cyprus","changed":9,"total":10,"pct":90},{"country":"Philippines","changed":9,"total":10,"pct":90},{"country":"Vietnam","changed":9,"total":10,"pct":90},{"country":"Poland","changed":9,"total":10,"pct":90},{"country":"Romania","changed":9,"total":10,"pct":90},{"country":"Japan","changed":8,"total":10,"pct":80}];
 const UPDATE_DATE="22 May 2026";
 const SCAN_DATE="2026-05-25";
 </script>
@@ -130,11 +136,11 @@ function App() {
         {tab === 'overview' && <>
           <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:14,marginBottom:24}}>
             {[
-              {icon:'🌍',val:N_COUNTRIES,label:'Destinations',sub:'in catalog',color:'#6366F1'},
-              {icon:'📦',val:N_PLANS,label:'Total Plans',sub:'across all destinations',color:'#3B82F6'},
-              {icon:'🔄',val:N_CHANGES,label:'Price Updates',sub:UPDATE_DATE,color:'#F59E0B'},
-              {icon:'📈',val:N_UP,label:'Increased',sub:'plans raised',color:'#22C55E'},
-              {icon:'📉',val:N_DN,label:'Decreased',sub:'plans lowered',color:'#EF4444'},
+              {icon:'🌍',val:N_COUNTRIES,label:'Total Destinations',sub:'markets covered',color:'#6366F1'},
+              {icon:'📦',val:N_PLANS,label:'Total Packages',sub:'across all markets',color:'#3B82F6'},
+              {icon:'✅',val:N_CHEAPER,label:'We Are Cheaper',sub:'vs avg competitor',color:'#22C55E'},
+              {icon:'⚠️',val:N_PRICIER,label:'We Are Pricier',sub:'vs avg competitor',color:'#F87171'},
+              {icon:'🎯',val:N_NEEDS_UPDATE,label:'Need Price Review',sub:'>10% above market',color:'#F59E0B'},
             ].map((k,i) => (
               <div key={i} className="kpi" style={{borderTopColor:k.color}}>
                 <div style={{fontSize:22,marginBottom:8}}>{k.icon}</div>
@@ -144,48 +150,63 @@ function App() {
               </div>
             ))}
           </div>
-          <div style={{background:'#111827',border:'1px solid #1E2A3B',borderRadius:14,padding:20,marginBottom:16}}>
-            <div style={{fontSize:14,fontWeight:700,marginBottom:16}}>All Destinations — Price Direction</div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:8}}>
-              {STATS.map(s => {
-                const up=s.pct>0,dn=s.pct<0;
-                const clr=up?'#F87171':dn?'#4ADE80':'#64748B';
-                const bg=up?'rgba(248,113,113,.06)':dn?'rgba(74,222,128,.06)':'rgba(255,255,255,.02)';
-                const bc=up?'rgba(248,113,113,.2)':dn?'rgba(74,222,128,.2)':'#1E2A3B';
-                return (
-                  <div key={s.country} className="ccard" style={{background:bg,borderColor:bc}} onClick={() => goCompare(s.country)}>
-                    <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
-                      <span style={{fontSize:11,fontWeight:700,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'70%'}}>{s.country}</span>
-                      <span style={{fontSize:12,fontWeight:800,color:clr}}>{up?'↑':dn?'↓':'—'}{Math.abs(s.pct)}%</span>
-                    </div>
-                    <div style={{fontSize:10,color:'#64748B'}}>{s.changed}/{s.total} changed</div>
-                    <div style={{background:'rgba(255,255,255,.06)',borderRadius:2,height:3,marginTop:6,overflow:'hidden'}}>
-                      <div style={{height:'100%',width:Math.min(100,Math.abs(s.pct)*2)+'%',background:clr,borderRadius:2}}/>
-                    </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+            <div style={{background:'#111827',border:'1px solid #1E2A3B',borderRadius:14,padding:20}}>
+              <div style={{fontSize:14,fontWeight:700,marginBottom:4,color:'#4ADE80'}}>💪 Competitive Advantage Markets</div>
+              <div style={{fontSize:11,color:'#64748B',marginBottom:14}}>Markets where Voye has the strongest price advantage vs competitors</div>
+              {STRONG_MARKETS.map((m,i) => (
+                <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'7px 0',borderBottom:'1px solid #0D1526'}}>
+                  <span style={{fontSize:13,fontWeight:600}}>{m.country}</span>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <span style={{fontSize:11,color:'#64748B'}}>{m.plans} pkgs</span>
+                    <Pill cls="up" text={`${m.adv}% cheaper`} />
                   </div>
-                );
-              })}
+                </div>
+              ))}
+            </div>
+            <div style={{background:'#111827',border:'1px solid #1E2A3B',borderRadius:14,padding:20}}>
+              <div style={{fontSize:14,fontWeight:700,marginBottom:4,color:'#F87171'}}>🔴 Weak Markets</div>
+              <div style={{fontSize:11,color:'#64748B',marginBottom:14}}>Markets where Voye is more expensive than competitors</div>
+              {WEAK_MARKETS.map((m,i) => (
+                <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'7px 0',borderBottom:'1px solid #0D1526'}}>
+                  <span style={{fontSize:13,fontWeight:600}}>{m.country}</span>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <span style={{fontSize:11,color:'#64748B'}}>{m.plans} pkgs</span>
+                    <Pill cls="dn" text={`${Math.abs(m.adv)}% pricier`} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-            {[['📈 Biggest Increases','#4ADE80',ALL_CHANGES.filter(c=>c.pct>0).slice(0,7),'up'],
-              ['📉 Biggest Decreases','#F87171',ALL_CHANGES.filter(c=>c.pct<0).slice(0,7),'dn']].map(([title,clr,list,pc]) => (
-              <div key={title} style={{background:'#111827',border:'1px solid #1E2A3B',borderRadius:14,padding:20}}>
-                <div style={{fontSize:14,fontWeight:700,marginBottom:14,color:clr}}>{title}</div>
-                {list.map((c,i) => (
-                  <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid #0D1526'}}>
-                    <div>
-                      <div style={{fontSize:13,fontWeight:600}}>{c.country}</div>
-                      <div style={{fontSize:11,color:'#64748B'}}>{c.data} · {c.days||'?'}d</div>
-                    </div>
-                    <div style={{textAlign:'right'}}>
-                      <div style={{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:'#94A3B8'}}>${c.old.toFixed(2)} → <span style={{color:clr,fontWeight:700}}>${c.new.toFixed(2)}</span></div>
-                      <Pill cls={pc} text={`${c.pct>0?'+':''}${c.pct}%`} />
-                    </div>
+            <div style={{background:'#111827',border:'1px solid #1E2A3B',borderRadius:14,padding:20}}>
+              <div style={{fontSize:14,fontWeight:700,marginBottom:4,color:'#F59E0B'}}>🕐 Last Price Update</div>
+              <div style={{fontSize:11,color:'#64748B',marginBottom:14}}>Updated {UPDATE_DATE} · Destinations with most plan changes</div>
+              {RECENT_UPDATES.map((m,i) => (
+                <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'7px 0',borderBottom:'1px solid #0D1526'}}>
+                  <span style={{fontSize:13,fontWeight:600}}>{m.country}</span>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <span style={{fontSize:11,color:'#64748B'}}>{m.changed}/{m.total} plans</span>
+                    <Pill cls="amber" text={`${m.pct}% updated`} />
                   </div>
-                ))}
-              </div>
-            ))}
+                </div>
+              ))}
+            </div>
+            <div style={{background:'#111827',border:'1px solid #1E2A3B',borderRadius:14,padding:20}}>
+              <div style={{fontSize:14,fontWeight:700,marginBottom:14}}>⚡ Significant Changes</div>
+              {ALL_CHANGES.slice(0,10).map((c,i) => (
+                <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'7px 0',borderBottom:'1px solid #0D1526'}}>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:600}}>{c.country}</div>
+                    <div style={{fontSize:11,color:'#64748B'}}>{c.data} · {c.days||'?'}d</div>
+                  </div>
+                  <div style={{textAlign:'right'}}>
+                    <div style={{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:'#94A3B8'}}>${c.old.toFixed(2)} → <span style={{color:c.pct>0?'#F87171':'#4ADE80',fontWeight:700}}>${c.new.toFixed(2)}</span></div>
+                    <Pill cls={c.pct>0?'dn':'up'} text={`${c.pct>0?'+':''}${c.pct}%`} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </>}
 
