@@ -89,8 +89,8 @@ function App() {
   const [previewRows, setPreviewRows] = useState([]);
   const [previewHeaders, setPreviewHeaders] = useState([]);
   const [previewTotal, setPreviewTotal] = useState(0);
-  const [t25Size, setT25Size] = useState(['all']);
-  const [t25Days, setT25Days] = useState(['all']);
+  const [t25Size, setT25Size] = useState(['5GB']);
+  const [t25Days, setT25Days] = useState(['7']);
 
   const filteredChanges = useMemo(() => {
     let list = ALL_CHANGES;
@@ -117,8 +117,8 @@ function App() {
       const filtered = plans.filter(p => {
         const price = isVoye ? (p.new_price||p.price) : p.price;
         if (!price) return false;
-        const sOk = t25Size.includes('all') || t25Size.includes(p.data);
-        const dOk = t25Days.includes('all') || t25Days.includes(String(p.days));
+        const sOk = t25Size.includes(p.data);
+        const dOk = t25Days.includes(String(p.days));
         return sOk && dOk;
       });
       if (!filtered.length) return null;
@@ -140,10 +140,31 @@ function App() {
   }, [t25Size, t25Days]);
 
   const toggleT25 = useCallback((val, current, setter) => {
-    if (val==='all') { setter(['all']); return; }
-    const next = current.filter(v=>v!=='all');
-    const updated = next.includes(val) ? next.filter(v=>v!==val) : [...next, val];
-    setter(updated.length ? updated : ['all']);
+    const updated = current.includes(val) ? current.filter(v=>v!==val) : [...current, val];
+    if (updated.length) setter(updated);
+  }, []);
+
+  const top25CSI = useMemo(() => {
+    return TOP25_DATA.slice(0, 10).map(country => {
+      const vPlans = (VOYE_DATA[country]||[]);
+      let nCheap=0, nMid=0, nPricey=0;
+      vPlans.forEach(vp => {
+        const vPrice = vp.new_price||vp.price;
+        if (!vPrice) return;
+        const compPrices = COMPETITORS.map(c => {
+          const match = ((COMP_DATA[c]||{})[country]||[]).find(cp => cp.data===vp.data && cp.days===vp.days);
+          return match ? match.price : null;
+        }).filter(p => p!==null);
+        if (!compPrices.length) return;
+        const allP = [vPrice,...compPrices];
+        const mn=Math.min(...allP), mx=Math.max(...allP);
+        if (vPrice<=mn) nCheap++;
+        else if (vPrice>=mx) nPricey++;
+        else nMid++;
+      });
+      const total = nCheap+nMid+nPricey;
+      return {country, cheap:total?Math.round(nCheap/total*100):0, mid:total?Math.round(nMid/total*100):0, pricey:total?Math.round(nPricey/total*100):0, total};
+    });
   }, []);
 
   const runAI = useCallback(async () => {
@@ -379,81 +400,118 @@ function App() {
                 <div style={{fontSize:14,fontWeight:700,color:'#1A1D2E'}}>Top 25 Tourist Destinations — Competitive Pricing</div>
               </div>
               <div style={{fontSize:12,color:'#94A3B8',marginBottom:14}}>
-                Showing avg price for <strong style={{color:'#6366F1'}}>{''+
-                  (t25Size.includes('all')?'all sizes':t25Size.join(', '))+' · '+
-                  (t25Days.includes('all')?'all durations':t25Days.map(d=>d+'d').join(', '))
-                }</strong> &nbsp;·&nbsp; Green = Voye cheapest · Yellow = middle · Red = most expensive
+                Showing avg price for <strong style={{color:'#6366F1'}}>{''+t25Size.join(', ')+' · '+t25Days.map(d=>d+'d').join(', ')}</strong>
+                &nbsp;·&nbsp; Green = Voye cheapest · Yellow = middle · Red = most expensive
               </div>
 
               {/* Filter bar */}
               <div style={{marginBottom:14}}>
                 <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap',marginBottom:8}}>
                   <span style={{fontSize:11,fontWeight:600,color:'#64748B',minWidth:56}}>PACKAGE</span>
-                  {['all',...top25Available.sizes].map(s => (
+                  {top25Available.sizes.map(s => (
                     <button key={s}
                       onClick={() => toggleT25(s, t25Size, setT25Size)}
                       style={{padding:'3px 11px',borderRadius:20,border:'1px solid '+(t25Size.includes(s)?'#6366F1':'#E2E8F0'),background:t25Size.includes(s)?'#6366F1':'#F8F9FC',color:t25Size.includes(s)?'#fff':'#64748B',fontSize:11,fontWeight:600,cursor:'pointer'}}
-                    >{s==='all'?'All':s}</button>
+                    >{s}</button>
                   ))}
                 </div>
                 <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
                   <span style={{fontSize:11,fontWeight:600,color:'#64748B',minWidth:56}}>DAYS</span>
-                  {['all',...top25Available.days].map(d => (
+                  {top25Available.days.map(d => (
                     <button key={d}
                       onClick={() => toggleT25(String(d), t25Days, setT25Days)}
                       style={{padding:'3px 11px',borderRadius:20,border:'1px solid '+(t25Days.includes(String(d))?'#6366F1':'#E2E8F0'),background:t25Days.includes(String(d))?'#6366F1':'#F8F9FC',color:t25Days.includes(String(d))?'#fff':'#64748B',fontSize:11,fontWeight:600,cursor:'pointer'}}
-                    >{d==='all'?'All':d+'d'}</button>
+                    >{d}d</button>
                   ))}
                 </div>
               </div>
 
-              <div style={{overflowX:'auto'}}>
-                <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
-                  <thead>
-                    <tr style={{background:'#F8F9FC',borderBottom:'2px solid #E8EBF0'}}>
-                      <th style={{padding:'8px 10px',textAlign:'left',color:'#64748B',fontWeight:600,letterSpacing:'.4px',textTransform:'uppercase',whiteSpace:'nowrap'}}>Destination</th>
-                      <th style={{padding:'8px 10px',textAlign:'right',color:'#6366F1',fontWeight:700,letterSpacing:'.4px',textTransform:'uppercase'}}>Voye</th>
-                      {COMPETITORS.map(c => (
-                        <th key={c} style={{padding:'8px 10px',textAlign:'right',color:COMP_COLORS[c]||'#64748B',fontWeight:600,letterSpacing:'.4px',textTransform:'uppercase'}}>{c.charAt(0).toUpperCase()+c.slice(1)}</th>
-                      ))}
-                      <th style={{padding:'8px 10px',textAlign:'center',color:'#64748B',fontWeight:600,letterSpacing:'.4px',textTransform:'uppercase'}}>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {top25Rows.map((row, i) => {
-                      const statusBg = row.status==='green'?'#F0FDF4':row.status==='red'?'#FFF5F5':row.status==='yellow'?'#FFFBEB':'#F8F9FC';
-                      const statusDot = row.status==='green'?'#10B981':row.status==='red'?'#EF4444':row.status==='yellow'?'#F59E0B':'#CBD5E1';
-                      const statusLabel = row.status==='green'?'Cheapest':row.status==='red'?'Priciest':row.status==='yellow'?'Middle':'—';
-                      const allPrices = [row.voye,...COMPETITORS.map(c=>row.comp[c])].filter(v=>v!=null);
-                      const minPrice = allPrices.length ? Math.min(...allPrices) : null;
-                      return (
-                        <tr key={i} style={{background:i%2===0?'#FFFFFF':statusBg,borderBottom:'1px solid #F1F5F9'}}>
-                          <td style={{padding:'9px 10px',fontWeight:600,color:'#1A1D2E',whiteSpace:'nowrap'}}>
-                            <span style={{display:'inline-block',width:18,color:'#94A3B8',fontSize:11,fontWeight:400}}>{i+1}</span>
-                            {row.country}
-                          </td>
-                          <td style={{padding:'9px 10px',textAlign:'right',fontFamily:"'Roboto Mono',monospace",fontWeight:700,color:row.voye!=null&&row.voye===minPrice?'#059669':'#6366F1'}}>
-                            {row.voye!=null ? '$'+row.voye.toFixed(2) : '—'}
-                          </td>
-                          {COMPETITORS.map(c => {
-                            const v = row.comp[c];
-                            return (
-                              <td key={c} style={{padding:'9px 10px',textAlign:'right',fontFamily:"'Roboto Mono',monospace",color:v!=null&&v===minPrice?'#DC2626':'#64748B'}}>
-                                {v!=null ? '$'+v.toFixed(2) : <span style={{color:'#E2E8F0'}}>—</span>}
-                              </td>
-                            );
-                          })}
-                          <td style={{padding:'9px 10px',textAlign:'center'}}>
-                            <span style={{display:'inline-flex',alignItems:'center',gap:5,background:statusBg,border:'1px solid '+statusDot+'33',borderRadius:20,padding:'2px 10px'}}>
-                              <span style={{width:7,height:7,borderRadius:'50%',background:statusDot,display:'inline-block'}}/>
-                              <span style={{fontSize:11,fontWeight:600,color:statusDot}}>{statusLabel}</span>
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              {/* Two-panel layout */}
+              <div style={{display:'flex',gap:20,alignItems:'flex-start'}}>
+
+                {/* Left 60%: pricing table */}
+                <div style={{flex:'0 0 60%',minWidth:0,overflowX:'auto'}}>
+                  <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                    <thead>
+                      <tr style={{background:'#F8F9FC',borderBottom:'2px solid #E8EBF0'}}>
+                        <th style={{padding:'8px 8px',textAlign:'left',color:'#64748B',fontWeight:600,letterSpacing:'.4px',textTransform:'uppercase',whiteSpace:'nowrap'}}>Destination</th>
+                        <th style={{padding:'8px 8px',textAlign:'right',color:'#6366F1',fontWeight:700,letterSpacing:'.4px',textTransform:'uppercase'}}>Voye</th>
+                        {COMPETITORS.map(c => (
+                          <th key={c} style={{padding:'8px 8px',textAlign:'right',color:COMP_COLORS[c]||'#64748B',fontWeight:600,letterSpacing:'.4px',textTransform:'uppercase'}}>{c.charAt(0).toUpperCase()+c.slice(1)}</th>
+                        ))}
+                        <th style={{padding:'8px 8px',textAlign:'center',color:'#64748B',fontWeight:600,letterSpacing:'.4px',textTransform:'uppercase'}}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {top25Rows.map((row, i) => {
+                        const statusBg = row.status==='green'?'#F0FDF4':row.status==='red'?'#FFF5F5':row.status==='yellow'?'#FFFBEB':'#F8F9FC';
+                        const statusDot = row.status==='green'?'#10B981':row.status==='red'?'#EF4444':row.status==='yellow'?'#F59E0B':'#CBD5E1';
+                        const statusLabel = row.status==='green'?'Cheapest':row.status==='red'?'Priciest':row.status==='yellow'?'Middle':'—';
+                        const allPrices = [row.voye,...COMPETITORS.map(c=>row.comp[c])].filter(v=>v!=null);
+                        const minPrice = allPrices.length ? Math.min(...allPrices) : null;
+                        return (
+                          <tr key={i} style={{background:i%2===0?'#FFFFFF':statusBg,borderBottom:'1px solid #F1F5F9'}}>
+                            <td style={{padding:'7px 8px',fontWeight:600,color:'#1A1D2E',whiteSpace:'nowrap'}}>
+                              <span style={{display:'inline-block',width:16,color:'#94A3B8',fontSize:11,fontWeight:400}}>{i+1}</span>
+                              {row.country}
+                            </td>
+                            <td style={{padding:'7px 8px',textAlign:'right',fontFamily:"'Roboto Mono',monospace",fontWeight:700,color:row.voye!=null&&row.voye===minPrice?'#059669':'#6366F1'}}>
+                              {row.voye!=null ? '$'+row.voye.toFixed(2) : '—'}
+                            </td>
+                            {COMPETITORS.map(c => {
+                              const v = row.comp[c];
+                              return (
+                                <td key={c} style={{padding:'7px 8px',textAlign:'right',fontFamily:"'Roboto Mono',monospace",color:v!=null&&v===minPrice?'#DC2626':'#64748B'}}>
+                                  {v!=null ? '$'+v.toFixed(2) : <span style={{color:'#E2E8F0'}}>—</span>}
+                                </td>
+                              );
+                            })}
+                            <td style={{padding:'7px 8px',textAlign:'center'}}>
+                              <span style={{display:'inline-flex',alignItems:'center',gap:4,background:statusBg,border:'1px solid '+statusDot+'33',borderRadius:20,padding:'2px 8px'}}>
+                                <span style={{width:6,height:6,borderRadius:'50%',background:statusDot,display:'inline-block'}}/>
+                                <span style={{fontSize:10,fontWeight:600,color:statusDot}}>{statusLabel}</span>
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Right 40%: Competitive Strength Index */}
+                <div style={{flex:'0 0 38%',minWidth:0,borderLeft:'1px solid #F1F5F9',paddingLeft:20}}>
+                  <div style={{fontSize:13,fontWeight:700,color:'#1A1D2E',marginBottom:4}}>Competitive Strength Index</div>
+                  <div style={{fontSize:11,color:'#94A3B8',marginBottom:14}}>Top 10 destinations — % of all packages where Voye is cheapest / middle / priciest</div>
+                  {top25CSI.map((row,i) => (
+                    <div key={i} style={{marginBottom:12}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:4}}>
+                        <span style={{fontSize:12,fontWeight:600,color:'#1A1D2E'}}>{row.country}</span>
+                        <span style={{fontSize:10,color:'#94A3B8'}}>{row.total} pkgs</span>
+                      </div>
+                      <div style={{display:'flex',height:18,borderRadius:6,overflow:'hidden',background:'#F1F5F9'}}>
+                        {row.cheap>0 && <div style={{flex:row.cheap,background:'#10B981',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                          {row.cheap>=12 && <span style={{fontSize:9,color:'#fff',fontWeight:700}}>{row.cheap}%</span>}
+                        </div>}
+                        {row.mid>0 && <div style={{flex:row.mid,background:'#F59E0B',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                          {row.mid>=12 && <span style={{fontSize:9,color:'#fff',fontWeight:700}}>{row.mid}%</span>}
+                        </div>}
+                        {row.pricey>0 && <div style={{flex:row.pricey,background:'#EF4444',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                          {row.pricey>=12 && <span style={{fontSize:9,color:'#fff',fontWeight:700}}>{row.pricey}%</span>}
+                        </div>}
+                        {row.total===0 && <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                          <span style={{fontSize:10,color:'#CBD5E1'}}>no data</span>
+                        </div>}
+                      </div>
+                    </div>
+                  ))}
+                  <div style={{display:'flex',gap:14,marginTop:10}}>
+                    <span style={{fontSize:10,color:'#10B981',fontWeight:600}}>● Cheapest</span>
+                    <span style={{fontSize:10,color:'#F59E0B',fontWeight:600}}>● Middle</span>
+                    <span style={{fontSize:10,color:'#EF4444',fontWeight:600}}>● Priciest</span>
+                  </div>
+                </div>
+
               </div>
             </div>
 
