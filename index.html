@@ -7,6 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -66,6 +67,15 @@ function App() {
   const [selCountry, setSelCountry] = useState(Object.keys(VOYE_DATA).sort()[0]);
   const [aiText, setAiText] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+  const [voyeState, setVoyeState] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('voye_state')||'null') || VOYE_DATA; } catch(e) { return VOYE_DATA; }
+  });
+  const [manualEdits, setManualEdits] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('manual_edits')||'{}'); } catch(e) { return {}; }
+  });
+  const [editMode, setEditMode] = useState(false);
+  const [uploadSummary, setUploadSummary] = useState(null);
+  const [saveStatus, setSaveStatus] = useState('');
 
   const filteredChanges = useMemo(() => {
     let list = ALL_CHANGES;
@@ -91,6 +101,51 @@ function App() {
       setAiText(data.content?.filter(b=>b.type==='text').map(b=>b.text).join('') || 'No response');
     } catch(e) { setAiText('Error — try again.'); }
     setAiLoading(false);
+  }, []);
+
+  const handleUpload = useCallback(async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const ab = await file.arrayBuffer();
+    const wb = XLSX.read(ab, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws);
+    const newVoye = JSON.parse(JSON.stringify(voyeState));
+    let updated = 0, skipped = [];
+    rows.forEach(row => {
+      const country = (row['Country']||row['country']||'').trim();
+      const data = (row['Data']||row['Package']||row['package']||row['data']||'').trim();
+      const days = parseInt(row['Days']||row['days']);
+      const price = parseFloat(row['Price']||row['price']);
+      if (!country||!data||isNaN(days)||isNaN(price)) { skipped.push('invalid row'); return; }
+      if (!newVoye[country]) { skipped.push('Unknown: '+country); return; }
+      const plan = newVoye[country].find(p => p.data===data && p.days===days);
+      if (plan) { plan.new_price=price; plan.changed=true; updated++; }
+      else skipped.push(country+' '+data+' '+days+'d');
+    });
+    setVoyeState(newVoye);
+    try { localStorage.setItem('voye_state', JSON.stringify(newVoye)); } catch(ex) {}
+    setUploadSummary({updated, skipped: skipped.slice(0,5), total: rows.length});
+    e.target.value='';
+  }, [voyeState]);
+
+  const saveEdits = useCallback(() => {
+    try {
+      localStorage.setItem('manual_edits', JSON.stringify(manualEdits));
+      localStorage.setItem('voye_state', JSON.stringify(voyeState));
+    } catch(ex) {}
+    setSaveStatus('Saved ✓');
+    setTimeout(() => setSaveStatus(''), 2000);
+  }, [manualEdits, voyeState]);
+
+  const resetEdits = useCallback(() => {
+    if (!confirm('Reset all manual edits and uploaded prices to original data?')) return;
+    localStorage.removeItem('manual_edits');
+    localStorage.removeItem('voye_state');
+    setVoyeState(VOYE_DATA);
+    setManualEdits({});
+    setEditMode(false);
+    setUploadSummary(null);
   }, []);
 
   return (
@@ -132,10 +187,22 @@ function App() {
           <Pill cls="info" text={`Updated ${UPDATE_DATE}`} />
           <Pill cls="up" text={`↑ ${N_UP} raised`} />
           <Pill cls="dn" text={`↓ ${N_DN} lowered`} />
+          <label style={{cursor:'pointer'}}>
+            <input type="file" accept=".xlsx" style={{display:'none'}} onChange={handleUpload} />
+            <span style={{background:'rgba(99,102,241,.15)',border:'1px solid rgba(99,102,241,.3)',color:'#A5B4FC',padding:'5px 12px',borderRadius:7,fontSize:12,fontWeight:600,cursor:'pointer',userSelect:'none'}}>↑ Upload Prices</span>
+          </label>
           <span style={{fontSize:10,color:'#334155'}}>Scan: {SCAN_DATE}</span>
         </div>
       </div>
 
+      {uploadSummary && (
+        <div style={{background:'rgba(34,197,94,.08)',borderBottom:'1px solid rgba(34,197,94,.2)',padding:'10px 28px',display:'flex',gap:20,alignItems:'center',fontSize:12}}>
+          <span style={{color:'#4ADE80',fontWeight:700}}>✓ Upload complete</span>
+          <span>{uploadSummary.updated} / {uploadSummary.total} prices updated</span>
+          {uploadSummary.skipped.length > 0 && <span style={{color:'#F59E0B'}}>Issues: {uploadSummary.skipped.join(', ')}</span>}
+          <button onClick={() => setUploadSummary(null)} style={{marginLeft:'auto',background:'transparent',border:'none',color:'#64748B',fontSize:18,lineHeight:1,cursor:'pointer'}}>×</button>
+        </div>
+      )}
       <div style={{maxWidth:1280,margin:'0 auto',padding:28}} className="page" key={tab}>
 
         {/* OVERVIEW */}
@@ -370,14 +437,22 @@ function App() {
 
         {/* COMPARE vs COMPETITORS */}
         {tab === 'compare' && <>
-          <div style={{marginBottom:14}}>
-            <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:12,alignItems:'center'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+            <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',flex:1}}>
               <span style={{fontSize:12,color:'#64748B',fontWeight:600}}>DESTINATION:</span>
               <div style={{display:'flex',gap:6,flexWrap:'wrap',flex:1}}>
-                {Object.keys(VOYE_DATA).sort().map(c => (
+                {Object.keys(voyeState).sort().map(c => (
                   <button key={c} className={`dbtn${c===selCountry?' on':''}`} onClick={() => setSelCountry(c)}>{c}</button>
                 ))}
               </div>
+            </div>
+            <div style={{display:'flex',gap:8,alignItems:'center',marginLeft:16,flexShrink:0}}>
+              {saveStatus && <span style={{fontSize:12,color:'#4ADE80',fontWeight:600}}>{saveStatus}</span>}
+              <button className={`fbtn${editMode?' on':''}`} onClick={() => setEditMode(m => !m)}>✏️ {editMode ? 'Editing' : 'Edit Prices'}</button>
+              {Object.keys(manualEdits).length > 0 && <>
+                <button className="fbtn on" onClick={saveEdits} style={{borderColor:'#22C55E',color:'#4ADE80'}}>💾 Save</button>
+                <button className="fbtn" onClick={resetEdits} style={{color:'#F87171'}}>↺ Reset</button>
+              </>}
             </div>
           </div>
           <div style={{overflow:'auto',borderRadius:14,border:'1px solid #1E2A3B'}}>
@@ -392,14 +467,18 @@ function App() {
                 <th style={{padding:'10px 16px',fontSize:10,color:'#64748B',fontWeight:600,letterSpacing:'.6px',textTransform:'uppercase',textAlign:'right'}}>vs Market</th>
               </tr></thead>
               <tbody>
-                {(VOYE_DATA[selCountry]||[]).map((p,i) => {
-                  const voyeP = p.new_price || p.price;
-                  const compPrices = COMPETITORS.map(comp => {
+                {(voyeState[selCountry]||[]).map((p,i) => {
+                  const vKey = 'voye|'+selCountry+'|'+(p.data||'')+'|'+p.days;
+                  const baseVoyeP = p.new_price || p.price;
+                  const voyeP = manualEdits[vKey] !== undefined ? (parseFloat(manualEdits[vKey])||baseVoyeP) : baseVoyeP;
+                  const compPrices = COMPETITORS.map((comp,j) => {
+                    const cKey = 'comp|'+comp+'|'+selCountry+'|'+(p.data||'')+'|'+p.days;
                     const cplans = (COMP_DATA[comp]||{})[selCountry] || [];
                     const match = cplans.find(cp => cp.data === p.data) || cplans.find(cp => cp.days === p.days);
-                    return match?.price || null;
+                    const baseP = match ? match.price : null;
+                    return manualEdits[cKey] !== undefined ? (parseFloat(manualEdits[cKey])||baseP) : baseP;
                   });
-                  const validPrices = compPrices.filter(Boolean);
+                  const validPrices = compPrices.filter(x => x !== null && x > 0);
                   const avgComp = validPrices.length ? validPrices.reduce((a,b)=>a+b,0)/validPrices.length : null;
                   const posPct = avgComp && voyeP ? Math.round((voyeP - avgComp) / avgComp * 100) : null;
                   return (
@@ -407,19 +486,35 @@ function App() {
                       <td style={{padding:'10px 16px',fontWeight:600,fontSize:13}}>{p.data||'—'}</td>
                       <td style={{padding:'10px 16px',fontSize:13,color:'#64748B'}}>{p.days||'—'}d</td>
                       <td style={{padding:'10px 16px',textAlign:'right'}}>
-                        <span style={{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:'#A5B4FC',fontWeight:700}}>${voyeP?.toFixed(2)||'—'}</span>
+                        {editMode
+                          ? <input type="number" step="0.01" style={{width:70,background:manualEdits[vKey]!==undefined?'rgba(245,158,11,.08)':'#0D1526',border:'1px solid '+(manualEdits[vKey]!==undefined?'#F59E0B':'#1E2A3B'),borderRadius:5,color:'#A5B4FC',padding:'3px 6px',fontSize:12,textAlign:'right',fontFamily:"'Roboto Mono',monospace",outline:'none'}} value={manualEdits[vKey]!==undefined ? manualEdits[vKey] : (baseVoyeP||'').toString()} onChange={e => setManualEdits(prev => ({...prev, [vKey]: e.target.value}))} />
+                          : <span style={{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:manualEdits[vKey]!==undefined?'#F59E0B':'#A5B4FC',fontWeight:700}}>${voyeP!=null?voyeP.toFixed(2):'—'}</span>
+                        }
                       </td>
-                      {compPrices.map((cp,j) => {
-                        const cheaper = cp && voyeP && cp < voyeP;
-                        const pricier = cp && voyeP && cp > voyeP;
+                      {COMPETITORS.map((comp,j) => {
+                        const cKey = 'comp|'+comp+'|'+selCountry+'|'+(p.data||'')+'|'+p.days;
+                        const cplans = (COMP_DATA[comp]||{})[selCountry] || [];
+                        const match = cplans.find(cp => cp.data === p.data) || cplans.find(cp => cp.days === p.days);
+                        const baseCompP = match ? match.price : null;
+                        const cp = compPrices[j];
+                        const isEdited = manualEdits[cKey] !== undefined;
+                        const cheaper = cp!=null && voyeP!=null && cp < voyeP;
+                        const pricier = cp!=null && voyeP!=null && cp > voyeP;
                         return (
                           <td key={j} style={{padding:'10px 16px',textAlign:'right'}}>
-                            {cp ? <span style={{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:cheaper?'#F87171':pricier?'#4ADE80':'#64748B'}}>${cp.toFixed(2)}</span> : <span style={{color:'#2D3748',fontSize:11}}>—</span>}
+                            {editMode
+                              ? (baseCompP !== null || isEdited)
+                                ? <input type="number" step="0.01" style={{width:70,background:isEdited?'rgba(245,158,11,.08)':'#0D1526',border:'1px solid '+(isEdited?'#F59E0B':'#1E2A3B'),borderRadius:5,color:isEdited?'#F59E0B':(cheaper?'#F87171':pricier?'#4ADE80':'#64748B'),padding:'3px 6px',fontSize:12,textAlign:'right',fontFamily:"'Roboto Mono',monospace",outline:'none'}} value={isEdited ? manualEdits[cKey] : (baseCompP||'').toString()} onChange={e => setManualEdits(prev => ({...prev, [cKey]: e.target.value}))} />
+                                : <span style={{color:'#2D3748',fontSize:11}}>—</span>
+                              : cp !== null
+                                ? <span style={{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:isEdited?'#F59E0B':(cheaper?'#F87171':pricier?'#4ADE80':'#64748B')}}>${cp.toFixed(2)}</span>
+                                : <span style={{color:'#2D3748',fontSize:11}}>—</span>
+                            }
                           </td>
                         );
                       })}
                       <td style={{padding:'10px 16px',textAlign:'right'}}>
-                        {posPct !== null ? <Pill cls={posPct>10?'dn':posPct<-10?'up':'na'} text={`${posPct>0?'+':''}${posPct}%`} /> : <span style={{color:'#2D3748',fontSize:11}}>—</span>}
+                        {posPct !== null ? <Pill cls={posPct>10?'dn':posPct<-10?'up':'na'} text={(posPct>0?'+':'')+posPct+'%'} /> : <span style={{color:'#2D3748',fontSize:11}}>—</span>}
                       </td>
                     </tr>
                   );
@@ -427,10 +522,11 @@ function App() {
               </tbody>
             </table>
           </div>
-          <div style={{marginTop:10,fontSize:11,color:'#475569',display:'flex',gap:20}}>
+          <div style={{marginTop:10,fontSize:11,color:'#475569',display:'flex',gap:20,flexWrap:'wrap'}}>
             <span><span style={{fontFamily:"'Roboto Mono',monospace",color:'#F87171'}}>$X.XX</span> = competitor cheaper than Voye</span>
             <span><span style={{fontFamily:"'Roboto Mono',monospace",color:'#4ADE80'}}>$X.XX</span> = competitor more expensive</span>
             <span>% = Voye vs market average</span>
+            {Object.keys(manualEdits).length > 0 && <span><span style={{fontFamily:"'Roboto Mono',monospace",color:'#F59E0B'}}>$X.XX</span> = edited ({Object.keys(manualEdits).length} unsaved)</span>}
           </div>
         </>}
 
