@@ -245,7 +245,7 @@ function App() {
         .filter(c => filter === 'all' || c.competitor === filter)
         .map(c => [c.country, c.data||'—', c.days, c.competitor.charAt(0).toUpperCase()+c.competitor.slice(1), c.prev_price, c.curr_price, c.change_pct/100, c.direction==='up'?'Up':'Down']);
       return {headers, rows, rawRows};
-    } else {
+    } else if (type === 'voye') {
       const headers = ['Destination','Package','Days','Current Price','Date'];
       const rows = [], rawRows = [];
       Object.entries(VOYE_DATA).forEach(([country, plans]) => {
@@ -256,6 +256,45 @@ function App() {
           rawRows.push([country, p.data||'—', p.days, price, UPDATE_DATE]);
         });
       });
+      return {headers, rows, rawRows};
+    } else {
+      // ── Pricing Recommendations ──
+      const headers = ['Destination','Package','Days','Voye Price','Cheapest Comp','Cheapest Price','% Diff','Recommendation','Suggested Price'];
+      const rows = [], rawRows = [];
+      const recentChanges = new Set((DIFF_DATA.changes||[]).map(c => c.country+'|'+(c.data||'')+'|'+c.days));
+      Object.entries(VOYE_DATA).forEach(([country, plans]) => {
+        plans.forEach(p => {
+          const vPrice = p.new_price||p.price;
+          if (!vPrice) return;
+          let cheapestComp = null, cheapestPrice = null;
+          COMPETITORS.forEach(comp => {
+            const match = ((COMP_DATA[comp]||{})[country]||[]).find(cp => cp.data===p.data && cp.days===p.days);
+            if (match && match.price > 0 && (cheapestPrice===null || match.price < cheapestPrice)) {
+              cheapestPrice = match.price; cheapestComp = comp;
+            }
+          });
+          if (cheapestPrice === null) return;
+          const diffPct = Math.round((vPrice - cheapestPrice) / cheapestPrice * 100);
+          const hasRecentChange = recentChanges.has(country+'|'+(p.data||'')+'|'+p.days);
+          let rec, suggested;
+          if (diffPct > 15 && hasRecentChange) {
+            rec = 'Urgent Review'; suggested = Math.round(cheapestPrice * 0.95 * 100) / 100;
+          } else if (diffPct > 15) {
+            rec = 'Reduce'; suggested = Math.round(cheapestPrice * 0.95 * 100) / 100;
+          } else if (diffPct < -30) {
+            rec = 'Increase'; suggested = Math.round((vPrice + cheapestPrice) / 2 * 100) / 100;
+          } else {
+            rec = 'OK'; suggested = vPrice;
+          }
+          const compName = cheapestComp ? cheapestComp.charAt(0).toUpperCase()+cheapestComp.slice(1) : '—';
+          const diffStr = (diffPct>0?'+':'')+diffPct+'%';
+          rows.push([country, p.data||'—', (p.days||'?')+'d', '$'+vPrice.toFixed(2), compName, '$'+cheapestPrice.toFixed(2), diffStr, rec, '$'+suggested.toFixed(2)]);
+          rawRows.push([country, p.data||'—', p.days, vPrice, compName, cheapestPrice, diffPct/100, rec, suggested]);
+        });
+      });
+      const order = {'Urgent Review':0,'Reduce':1,'Increase':2,'OK':3};
+      rows.sort((a,b) => (order[a[7]]??3)-(order[b[7]]??3));
+      rawRows.sort((a,b) => (order[a[7]]??3)-(order[b[7]]??3));
       return {headers, rows, rawRows};
     }
   }, []);
@@ -272,26 +311,45 @@ function App() {
     setReportError('');
     try {
       const {headers, rawRows} = buildReportRows(reportType, compFilter);
+      const applyFormats = (ws, rws, numCols, pctCols) => {
+        ws['!cols'] = headers.map((_,i) => ({wch:i===0?22:i===7?15:13}));
+        rws.forEach((_,ri) => {
+          numCols.forEach(ci => {
+            const cell = ws[XLSX.utils.encode_cell({r:ri+1,c:ci})];
+            if (cell && typeof cell.v==='number') cell.z='$#,##0.00';
+          });
+          pctCols.forEach(ci => {
+            const cell = ws[XLSX.utils.encode_cell({r:ri+1,c:ci})];
+            if (cell && typeof cell.v==='number') cell.z='0.0%';
+          });
+        });
+      };
       const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.aoa_to_sheet([headers, ...rawRows]);
-      ws['!cols'] = headers.map((_,i) => ({wch:i===0?22:13}));
       if (reportType === 'comp') {
-        rawRows.forEach((_,ri) => [4,5,6].forEach(ci => {
-          const addr = XLSX.utils.encode_cell({r:ri+1,c:ci});
-          const cell = ws[addr];
-          if (cell && typeof cell.v === 'number') cell.z = ci===6?'0.0%':'$#,##0.00';
-        }));
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...rawRows]);
+        applyFormats(ws, rawRows, [4,5], [6]);
+        XLSX.utils.book_append_sheet(wb, ws, 'Competitor Changes');
+      } else if (reportType === 'voye') {
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...rawRows]);
+        applyFormats(ws, rawRows, [3], []);
+        XLSX.utils.book_append_sheet(wb, ws, 'Voye Pricing');
       } else {
-        rawRows.forEach((_,ri) => [3].forEach(ci => {
-          const addr = XLSX.utils.encode_cell({r:ri+1,c:ci});
-          const cell = ws[addr];
-          if (cell && typeof cell.v === 'number') cell.z = '$#,##0.00';
-        }));
+        // Reco report: one sheet per category + All
+        const cats = ['Urgent Review','Reduce','Increase','OK'];
+        cats.forEach(cat => {
+          const sub = rawRows.filter(r => r[7]===cat);
+          if (!sub.length) return;
+          const ws = XLSX.utils.aoa_to_sheet([headers, ...sub]);
+          applyFormats(ws, sub, [3,5,8], [6]);
+          XLSX.utils.book_append_sheet(wb, ws, cat);
+        });
+        const wsAll = XLSX.utils.aoa_to_sheet([headers, ...rawRows]);
+        applyFormats(wsAll, rawRows, [3,5,8], [6]);
+        XLSX.utils.book_append_sheet(wb, wsAll, 'All Plans');
       }
-      XLSX.utils.book_append_sheet(wb, ws, 'Report');
       const part = reportType==='comp'
         ? (compFilter==='all'?'All_Competitors':compFilter.charAt(0).toUpperCase()+compFilter.slice(1))
-        : 'Voye_Pricing';
+        : reportType==='voye' ? 'Voye_Pricing' : 'Pricing_Recommendations';
       const d1 = (dateFrom||'').replace(/-/g,'') || 'latest';
       const d2 = dateTo && dateTo!==dateFrom ? '_to_'+(dateTo||'').replace(/-/g,'') : '';
       XLSX.writeFile(wb, part+'_'+d1+d2+'.xlsx');
@@ -922,7 +980,7 @@ function App() {
             </div>
 
             {/* Report type cards */}
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:20}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:20,marginBottom:20}}>
               <div className="card" style={{padding:20,cursor:'pointer',border:reportType==='comp'?'2px solid #6366F1':'1px solid #E8EBF0',transition:'border-color .15s'}} onClick={() => setReportType('comp')}>
                 <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
                   <div style={{width:38,height:38,borderRadius:10,background:'#DBEAFE',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>📊</div>
@@ -950,12 +1008,28 @@ function App() {
                 <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
                   <div style={{width:38,height:38,borderRadius:10,background:'#D1FAE5',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>📋</div>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:14,fontWeight:700,color:'#1A1D2E'}}>Voye Price Changes</div>
-                    <div style={{fontSize:11,color:'#94A3B8'}}>{N_CHANGES} records from last update</div>
+                    <div style={{fontSize:14,fontWeight:700,color:'#1A1D2E'}}>Voye Price Catalog</div>
+                    <div style={{fontSize:11,color:'#94A3B8'}}>{Object.values(VOYE_DATA).reduce((s,p)=>s+p.length,0)} plans across {Object.keys(VOYE_DATA).length} countries</div>
                   </div>
                   {reportType==='voye' && <span style={{background:'#EEF2FF',color:'#6366F1',padding:'2px 10px',borderRadius:20,fontSize:11,fontWeight:600}}>● Selected</span>}
                 </div>
-                <div style={{fontSize:12,color:'#64748B',lineHeight:1.7}}>Destination · Package · Days · Old Price · New Price · Change $ · Change % · Date</div>
+                <div style={{fontSize:12,color:'#64748B',lineHeight:1.7}}>Destination · Package · Days · Current Price · Date</div>
+              </div>
+
+              <div className="card" style={{padding:20,cursor:'pointer',border:reportType==='reco'?'2px solid #F59E0B':'1px solid #E8EBF0',transition:'border-color .15s',background:reportType==='reco'?'#FFFBEB':'#fff'}} onClick={() => setReportType('reco')}>
+                <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
+                  <div style={{width:38,height:38,borderRadius:10,background:'#FEF3C7',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>🎯</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:14,fontWeight:700,color:'#1A1D2E'}}>Pricing Recommendations</div>
+                    <div style={{fontSize:11,color:'#94A3B8'}}>AI-powered repricing analysis</div>
+                  </div>
+                  {reportType==='reco' && <span style={{background:'#FEF3C7',color:'#92400E',padding:'2px 10px',borderRadius:20,fontSize:11,fontWeight:600}}>● Selected</span>}
+                </div>
+                <div style={{fontSize:12,color:'#64748B',lineHeight:1.7}}>
+                  Flags plans &gt;15% above cheapest competitor (Reduce),<br/>
+                  cheapest by &gt;30% (Increase), or competitor changed price (Urgent Review).
+                  Suggests target prices. Exported as multi-sheet .xlsx.
+                </div>
               </div>
             </div>
 
@@ -989,27 +1063,62 @@ function App() {
                     {reportError && <span style={{fontSize:11,color:'#EF4444'}}>{reportError}</span>}
                   </div>
                 </div>
+
+                {/* Reco summary badges */}
+                {reportType==='reco' && previewTotal > 0 && (() => {
+                  const allRows = buildReportRows('reco','all').rows;
+                  const counts = {};
+                  allRows.forEach(r => { counts[r[7]] = (counts[r[7]]||0)+1; });
+                  return (
+                    <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap'}}>
+                      {[['Urgent Review','#F97316','#FFF7ED'],['Reduce','#EF4444','#FEF2F2'],['Increase','#10B981','#F0FDF4'],['OK','#94A3B8','#F8FAFC']].map(([k,color,bg]) => counts[k] ? (
+                        <span key={k} style={{background:bg,border:'1px solid '+color+'44',color,borderRadius:20,padding:'4px 14px',fontSize:12,fontWeight:600}}>
+                          {k}: {counts[k]}
+                        </span>
+                      ) : null)}
+                    </div>
+                  );
+                })()}
+
                 {previewTotal === 0 && <div style={{padding:'20px 0',textAlign:'center',color:'#94A3B8',fontSize:13}}>No records for this report type.</div>}
-                <div style={{overflow:'auto',borderRadius:10,border:'1px solid #E8EBF0'}}>
-                  <table style={{width:'100%',borderCollapse:'collapse'}}>
-                    <thead>
-                      <tr style={{background:'#F8F9FC',borderBottom:'2px solid #E8EBF0'}}>
-                        {previewHeaders.map((h,i) => (
-                          <th key={i} style={{padding:'9px 14px',fontSize:10,color:'#64748B',fontWeight:600,letterSpacing:'.5px',textTransform:'uppercase',textAlign:'left',whiteSpace:'nowrap'}}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {previewRows.map((row,ri) => (
-                        <tr key={ri} className="tbl-row" style={{borderBottom:'1px solid #F1F5F9'}}>
-                          {row.map((cell,ci) => (
-                            <td key={ci} style={{padding:'9px 14px',fontSize:12,color:ci===0?'#1A1D2E':(ci===7&&cell==='▲ Up'?'#EF4444':ci===7&&cell==='▼ Down'?'#10B981':'#64748B'),fontWeight:ci===0?600:400,whiteSpace:'nowrap',fontFamily:ci>=3&&ci<=6?"'Roboto Mono',monospace":'inherit'}}>{String(cell)}</td>
+                {previewTotal > 0 && (
+                  <div style={{overflow:'auto',borderRadius:10,border:'1px solid #E8EBF0'}}>
+                    <table style={{width:'100%',borderCollapse:'collapse'}}>
+                      <thead>
+                        <tr style={{background:'#F8F9FC',borderBottom:'2px solid #E8EBF0'}}>
+                          {previewHeaders.map((h,i) => (
+                            <th key={i} style={{padding:'9px 14px',fontSize:10,color:'#64748B',fontWeight:600,letterSpacing:'.5px',textTransform:'uppercase',textAlign:'left',whiteSpace:'nowrap'}}>{h}</th>
                           ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {previewRows.map((row,ri) => {
+                          const rec = reportType==='reco' ? row[7] : null;
+                          const rowBg = rec==='Urgent Review'?'#FFF7ED':rec==='Reduce'?'#FEF2F2':rec==='Increase'?'#F0FDF4':'#fff';
+                          return (
+                            <tr key={ri} style={{background:rowBg,borderBottom:'1px solid #F1F5F9'}}>
+                              {row.map((cell,ci) => {
+                                let color = '#64748B';
+                                if (ci===0) color='#1A1D2E';
+                                else if (reportType==='reco' && ci===7) {
+                                  color = rec==='Urgent Review'?'#F97316':rec==='Reduce'?'#EF4444':rec==='Increase'?'#10B981':'#94A3B8';
+                                }
+                                else if (ci===7 && cell==='▲ Up') color='#EF4444';
+                                else if (ci===7 && cell==='▼ Down') color='#10B981';
+                                const isMono = reportType==='reco' ? (ci>=3&&ci<=5)||ci===8 : ci>=3&&ci<=6;
+                                return (
+                                  <td key={ci} style={{padding:'9px 14px',fontSize:12,color,fontWeight:ci===0||ci===7?600:400,whiteSpace:'nowrap',fontFamily:isMono?"'Roboto Mono',monospace":'inherit'}}>
+                                    {String(cell)}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
                 {previewTotal > 10 && <div style={{marginTop:10,fontSize:12,color:'#94A3B8',textAlign:'center'}}>… and {previewTotal-10} more rows in the full download</div>}
               </div>
             )}
