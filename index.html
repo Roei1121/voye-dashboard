@@ -588,13 +588,25 @@ function App() {
                           || (!_isUnl(pd) && cplans.find(cp => cp.days === pdays && !_isUnl(cp.data)))
                           || null;
                     };
-                    const compPrices = COMPETITORS.map((comp,j) => {
+                    const _estimatePrice = (cplans, pd) => {
+                      if (!pd || _isUnl(pd)) return null;
+                      const gbNum = parseFloat(pd);
+                      if (isNaN(gbNum) || gbNum <= 0) return null;
+                      const capped = cplans.filter(cp => cp.data && !_isUnl(cp.data) && parseFloat(cp.data) > 0 && cp.price > 0);
+                      if (!capped.length) return null;
+                      const avgPerGB = capped.reduce((s,cp) => s + cp.price/parseFloat(cp.data), 0) / capped.length;
+                      return Math.round(avgPerGB * gbNum * 100) / 100;
+                    };
+                    const compPricesRaw = COMPETITORS.map((comp,j) => {
                       const cKey = 'comp|'+comp+'|'+selCountry+'|'+(p.data||'')+'|'+p.days;
                       const cplans = (COMP_DATA[comp]||{})[selCountry] || [];
+                      if (manualEdits[cKey] !== undefined) return {price: parseFloat(manualEdits[cKey])||null, isEst:false, isEdited:true};
                       const match = _findMatch(cplans, p.data, p.days);
-                      const baseP = match ? match.price : null;
-                      return manualEdits[cKey] !== undefined ? (parseFloat(manualEdits[cKey])||baseP) : baseP;
+                      if (match) return {price: match.price, isEst:false, isEdited:false};
+                      const est = _estimatePrice(cplans, p.data);
+                      return {price: est, isEst: est !== null, isEdited:false};
                     });
+                    const compPrices = compPricesRaw.map(r => r.price);
                     const validPrices = compPrices.filter(x => x !== null && x > 0);
                     const avgComp = validPrices.length ? validPrices.reduce((a,b)=>a+b,0)/validPrices.length : null;
                     const posPct = avgComp && voyeP ? Math.round((voyeP - avgComp) / avgComp * 100) : null;
@@ -611,12 +623,16 @@ function App() {
                         {COMPETITORS.map((comp,j) => {
                           const cKey = 'comp|'+comp+'|'+selCountry+'|'+(p.data||'')+'|'+p.days;
                           const cplans = (COMP_DATA[comp]||{})[selCountry] || [];
-                          const match = _findMatch(cplans, p.data, p.days);
-                          const baseCompP = match ? match.price : null;
-                          const cp = compPrices[j];
-                          const isEdited = manualEdits[cKey] !== undefined;
+                          const raw = compPricesRaw[j];
+                          const cp = raw ? raw.price : null;
+                          const isEst = raw ? raw.isEst : false;
+                          const isEdited = raw ? raw.isEdited : false;
+                          const exactMatch = _findMatch(cplans, p.data, p.days);
+                          const baseCompP = exactMatch ? exactMatch.price : null;
                           const cheaper = cp!=null && voyeP!=null && cp < voyeP;
                           const pricier = cp!=null && voyeP!=null && cp > voyeP;
+                          const priceColor = isEdited?'#D97706':(cheaper?'#EF4444':pricier?'#10B981':'#94A3B8');
+                          const estTitle = 'Estimated: no exact '+comp+' match for '+(p.data||'?')+' — calculated from their avg cost-per-GB across '+(cplans.filter(c=>c.data&&!_isUnl(c.data)).length)+' plans in this country';
                           return (
                             <td key={j} style={{padding:'11px 16px',textAlign:'right'}}>
                               {editMode
@@ -624,7 +640,10 @@ function App() {
                                   ? <input type="number" step="0.01" style={{width:72,background:isEdited?'#FFFBEB':'#F8F9FC',border:'1px solid '+(isEdited?'#F59E0B':'#E2E8F0'),borderRadius:6,color:isEdited?'#D97706':(cheaper?'#EF4444':pricier?'#10B981':'#64748B'),padding:'4px 7px',fontSize:12,textAlign:'right',fontFamily:"'Roboto Mono',monospace",outline:'none'}} value={isEdited ? manualEdits[cKey] : (baseCompP||'').toString()} onChange={e => setManualEdits(prev => ({...prev, [cKey]: e.target.value}))} />
                                   : <span style={{color:'#CBD5E1',fontSize:11}}>—</span>
                                 : cp !== null
-                                  ? <span style={{fontFamily:"'Roboto Mono',monospace",fontSize:13,color:isEdited?'#D97706':(cheaper?'#EF4444':pricier?'#10B981':'#94A3B8')}}>${cp.toFixed(2)}</span>
+                                  ? <span
+                                      style={{fontFamily:"'Roboto Mono',monospace",fontSize:isEst?11:13,fontStyle:isEst?'italic':'normal',color:priceColor,opacity:isEst?0.8:1,cursor:isEst?'help':'default'}}
+                                      title={isEst ? estTitle : undefined}
+                                    >{isEst?'~':''}${cp.toFixed(2)}</span>
                                   : <span style={{color:'#CBD5E1',fontSize:11}}>—</span>
                               }
                             </td>
@@ -642,6 +661,7 @@ function App() {
             <div style={{marginTop:10,fontSize:11,color:'#94A3B8',display:'flex',gap:20,flexWrap:'wrap'}}>
               <span><span style={{fontFamily:"'Roboto Mono',monospace",color:'#EF4444'}}>$X.XX</span> = competitor cheaper than Voye</span>
               <span><span style={{fontFamily:"'Roboto Mono',monospace",color:'#10B981'}}>$X.XX</span> = competitor more expensive</span>
+              <span><span style={{fontFamily:"'Roboto Mono',monospace",fontStyle:'italic',color:'#94A3B8'}}><em>~$X.XX</em></span> = estimated (no exact plan — hover for details)</span>
               <span>% = Voye vs market average</span>
               {Object.keys(manualEdits).length > 0 && <span><span style={{fontFamily:"'Roboto Mono',monospace",color:'#D97706'}}>$X.XX</span> = edited ({Object.keys(manualEdits).length} unsaved)</span>}
             </div>
