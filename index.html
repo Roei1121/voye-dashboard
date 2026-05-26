@@ -139,10 +139,7 @@ function App() {
     });
   }, [t25Size, t25Days]);
 
-  const toggleT25 = useCallback((val, current, setter) => {
-    const updated = current.includes(val) ? current.filter(v=>v!==val) : [...current, val];
-    if (updated.length) setter(updated);
-  }, []);
+  const toggleT25 = useCallback((val, setter) => { setter([val]); }, []);
 
   const top25CSI = useMemo(() => {
     return TOP25_DATA.slice(0, 10).map(country => {
@@ -410,7 +407,7 @@ function App() {
                   <span style={{fontSize:11,fontWeight:600,color:'#64748B',minWidth:56}}>PACKAGE</span>
                   {top25Available.sizes.map(s => (
                     <button key={s}
-                      onClick={() => toggleT25(s, t25Size, setT25Size)}
+                      onClick={() => toggleT25(s, setT25Size)}
                       style={{padding:'3px 11px',borderRadius:20,border:'1px solid '+(t25Size.includes(s)?'#6366F1':'#E2E8F0'),background:t25Size.includes(s)?'#6366F1':'#F8F9FC',color:t25Size.includes(s)?'#fff':'#64748B',fontSize:11,fontWeight:600,cursor:'pointer'}}
                     >{s}</button>
                   ))}
@@ -419,7 +416,7 @@ function App() {
                   <span style={{fontSize:11,fontWeight:600,color:'#64748B',minWidth:56}}>DAYS</span>
                   {top25Available.days.map(d => (
                     <button key={d}
-                      onClick={() => toggleT25(String(d), t25Days, setT25Days)}
+                      onClick={() => toggleT25(String(d), setT25Days)}
                       style={{padding:'3px 11px',borderRadius:20,border:'1px solid '+(t25Days.includes(String(d))?'#6366F1':'#E2E8F0'),background:t25Days.includes(String(d))?'#6366F1':'#F8F9FC',color:t25Days.includes(String(d))?'#fff':'#64748B',fontSize:11,fontWeight:600,cursor:'pointer'}}
                     >{d}d</button>
                   ))}
