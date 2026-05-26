@@ -73,6 +73,7 @@ function App() {
   const [selCountry, setSelCountry] = useState(Object.keys(VOYE_DATA).sort()[0]);
   const [aiText, setAiText] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiKey, setAiKey] = useState(() => { try { return localStorage.getItem('anthropic_key')||''; } catch(e) { return ''; } });
   const [voyeState, setVoyeState] = useState(() => {
     try { return JSON.parse(localStorage.getItem('voye_state')||'null') || VOYE_DATA; } catch(e) { return VOYE_DATA; }
   });
@@ -84,6 +85,7 @@ function App() {
   const [saveStatus, setSaveStatus] = useState('');
   const [reportType, setReportType] = useState('comp');
   const [compFilter, setCompFilter] = useState('all');
+  const [reportError, setReportError] = useState('');
   const [dateFrom, setDateFrom] = useState(DIFF_DATE);
   const [dateTo, setDateTo] = useState(DIFF_DATE);
   const [previewRows, setPreviewRows] = useState([]);
@@ -165,20 +167,28 @@ function App() {
   }, []);
 
   const runAI = useCallback(async () => {
+    if (!aiKey.trim()) { setAiText('⚠ Enter your Anthropic API key above first.'); return; }
     setAiLoading(true); setAiText('');
     const top = ALL_CHANGES.slice(0,10).map(c => c.country+' '+c.data+' '+c.days+'d: $'+c.old+'→$'+c.new+' ('+(c.pct>0?'+':'')+c.pct+'%)').join('\n');
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000,
-          messages:[{role:'user',content:'You are a pricing strategist for Voye Global, an eSIM provider.\n\nPricing update ('+UPDATE_DATE+'):\n- '+N_CHANGES+' price changes across '+N_COUNTRIES+' destinations\n- '+N_UP+' increases, '+N_DN+' decreases\n\nBiggest changes:\n'+top+'\n\nGive 5 sharp actionable strategic insights. English bullet points.'}]
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'x-api-key': aiKey.trim(),
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true',
+        },
+        body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1000,
+          messages:[{role:'user',content:'You are a pricing strategist for Voye Global, an eSIM provider.\n\nPricing update ('+UPDATE_DATE+'):\n- '+N_CHANGES+' price changes across '+N_COUNTRIES+' destinations\n- '+N_UP+' increases, '+N_DN+' decreases\n\nBiggest changes:\n'+(top||'(no recent changes)')+' \n\nGive 5 sharp actionable strategic insights. English bullet points.'}]
         })
       });
       const data = await res.json();
-      setAiText(data.content?.filter(b=>b.type==='text').map(b=>b.text).join('') || 'No response');
-    } catch(e) { setAiText('Error — try again.'); }
+      if (data.error) { setAiText('API error: '+data.error.message); }
+      else { setAiText(data.content?.filter(b=>b.type==='text').map(b=>b.text).join('') || 'No response'); }
+    } catch(e) { setAiText('Error: '+e.message); }
     setAiLoading(false);
-  }, []);
+  }, [aiKey]);
 
   const handleUpload = useCallback(async (e) => {
     const file = e.target.files[0];
@@ -236,14 +246,14 @@ function App() {
         .map(c => [c.country, c.data||'—', c.days, c.competitor.charAt(0).toUpperCase()+c.competitor.slice(1), c.prev_price, c.curr_price, c.change_pct/100, c.direction==='up'?'Up':'Down']);
       return {headers, rows, rawRows};
     } else {
-      const headers = ['Destination','Package','Days','Old Price','New Price','Change $','Change %','Date'];
+      const headers = ['Destination','Package','Days','Current Price','Date'];
       const rows = [], rawRows = [];
       Object.entries(VOYE_DATA).forEach(([country, plans]) => {
-        plans.filter(p => p.changed && p.price && p.new_price).forEach(p => {
-          const pct = Math.round((p.new_price - p.price) / p.price * 100);
-          const diff = (p.new_price - p.price).toFixed(2);
-          rows.push([country, p.data||'—', (p.days||'?')+'d', '$'+p.price.toFixed(2), '$'+p.new_price.toFixed(2), (p.new_price>p.price?'+':'')+diff, (pct>0?'+':'')+pct+'%', UPDATE_DATE]);
-          rawRows.push([country, p.data||'—', p.days, p.price, p.new_price, p.new_price-p.price, (p.new_price-p.price)/p.price, UPDATE_DATE]);
+        plans.forEach(p => {
+          const price = p.new_price||p.price;
+          if (!price) return;
+          rows.push([country, p.data||'—', (p.days||'?')+'d', '$'+price.toFixed(2), UPDATE_DATE]);
+          rawRows.push([country, p.data||'—', p.days, price, UPDATE_DATE]);
         });
       });
       return {headers, rows, rawRows};
@@ -251,6 +261,7 @@ function App() {
   }, []);
 
   const generatePreview = useCallback(() => {
+    setReportError('');
     const {headers, rows} = buildReportRows(reportType, compFilter);
     setPreviewHeaders(headers);
     setPreviewRows(rows.slice(0,10));
@@ -258,31 +269,35 @@ function App() {
   }, [reportType, compFilter, buildReportRows]);
 
   const downloadReport = useCallback(() => {
-    const {headers, rawRows} = buildReportRows(reportType, compFilter);
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...rawRows]);
-    ws['!cols'] = headers.map((_,i) => ({wch:i===0?22:13}));
-    if (reportType === 'comp') {
-      const numCols = [4,5,6];
-      rawRows.forEach((_,ri) => numCols.forEach(ci => {
-        const addr = XLSX.utils.encode_cell({r:ri+1,c:ci});
-        const cell = ws[addr];
-        if (cell && typeof cell.v === 'number') cell.z = ci===6?'0.0%':'$#,##0.00';
-      }));
-    } else {
-      rawRows.forEach((_,ri) => [3,4,5,6].forEach(ci => {
-        const addr = XLSX.utils.encode_cell({r:ri+1,c:ci});
-        const cell = ws[addr];
-        if (cell && typeof cell.v === 'number') cell.z = ci===6?'0.0%':'$#,##0.00';
-      }));
+    setReportError('');
+    try {
+      const {headers, rawRows} = buildReportRows(reportType, compFilter);
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rawRows]);
+      ws['!cols'] = headers.map((_,i) => ({wch:i===0?22:13}));
+      if (reportType === 'comp') {
+        rawRows.forEach((_,ri) => [4,5,6].forEach(ci => {
+          const addr = XLSX.utils.encode_cell({r:ri+1,c:ci});
+          const cell = ws[addr];
+          if (cell && typeof cell.v === 'number') cell.z = ci===6?'0.0%':'$#,##0.00';
+        }));
+      } else {
+        rawRows.forEach((_,ri) => [3].forEach(ci => {
+          const addr = XLSX.utils.encode_cell({r:ri+1,c:ci});
+          const cell = ws[addr];
+          if (cell && typeof cell.v === 'number') cell.z = '$#,##0.00';
+        }));
+      }
+      XLSX.utils.book_append_sheet(wb, ws, 'Report');
+      const part = reportType==='comp'
+        ? (compFilter==='all'?'All_Competitors':compFilter.charAt(0).toUpperCase()+compFilter.slice(1))
+        : 'Voye_Pricing';
+      const d1 = (dateFrom||'').replace(/-/g,'') || 'latest';
+      const d2 = dateTo && dateTo!==dateFrom ? '_to_'+(dateTo||'').replace(/-/g,'') : '';
+      XLSX.writeFile(wb, part+'_'+d1+d2+'.xlsx');
+    } catch(e) {
+      setReportError('Download failed: '+e.message);
     }
-    XLSX.utils.book_append_sheet(wb, ws, 'Report');
-    const part = reportType==='comp'
-      ? (compFilter==='all'?'All_Competitors':compFilter.charAt(0).toUpperCase()+compFilter.slice(1))
-      : 'Voye';
-    const d1 = dateFrom.replace(/-/g,'');
-    const d2 = dateTo && dateTo!==dateFrom ? '_to_'+dateTo.replace(/-/g,'') : '';
-    XLSX.writeFile(wb, part+'_Price_Changes_'+d1+d2+'.xlsx');
   }, [reportType, compFilter, dateFrom, dateTo, buildReportRows]);
 
   const tabLabels = {overview:'Overview',changes:'Price Changes',compare:'vs Competitors',reports:'Reports',ai:'AI Analysis'};
@@ -856,6 +871,19 @@ function App() {
 
           {/* ── AI ── */}
           {tab === 'ai' && <>
+            <div className="card" style={{padding:20,marginBottom:20}}>
+              <div style={{fontSize:13,fontWeight:600,color:'#1A1D2E',marginBottom:8}}>Anthropic API Key</div>
+              <div style={{display:'flex',gap:10,alignItems:'center'}}>
+                <input
+                  type="password"
+                  placeholder="sk-ant-..."
+                  value={aiKey}
+                  onChange={e => { setAiKey(e.target.value); try{localStorage.setItem('anthropic_key',e.target.value)}catch(_){} }}
+                  style={{flex:1,border:'1px solid #E2E8F0',borderRadius:8,padding:'8px 12px',fontSize:13,fontFamily:"'Roboto Mono',monospace",outline:'none'}}
+                />
+                <span style={{fontSize:11,color:'#94A3B8'}}>Saved in browser · never sent to our server</span>
+              </div>
+            </div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:20}}>
               <div className="card" style={{padding:24,borderTop:'3px solid #6366F1'}}>
                 <div style={{fontSize:15,fontWeight:700,color:'#1A1D2E',marginBottom:10}}>🧠 Strategic Analysis</div>
@@ -949,15 +977,19 @@ function App() {
             </div>
 
             {/* Preview */}
-            {previewRows.length > 0 && (
+            {previewHeaders.length > 0 && (
               <div className="card" style={{padding:20}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
                   <div>
                     <div style={{fontSize:14,fontWeight:700,color:'#1A1D2E'}}>Preview</div>
-                    <div style={{fontSize:12,color:'#94A3B8'}}>Showing first {previewRows.length} of {previewTotal} records</div>
+                    <div style={{fontSize:12,color:'#94A3B8'}}>{previewTotal} records · showing first {Math.min(previewRows.length,previewTotal)}</div>
                   </div>
-                  <button onClick={downloadReport} style={{background:'#10B981',border:'none',color:'#fff',padding:'8px 20px',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6,boxShadow:'0 2px 8px rgba(16,185,129,.25)'}}>⬇ Download .xlsx</button>
+                  <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4}}>
+                    <button onClick={downloadReport} style={{background:'#10B981',border:'none',color:'#fff',padding:'8px 20px',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6,boxShadow:'0 2px 8px rgba(16,185,129,.25)'}}>⬇ Download .xlsx</button>
+                    {reportError && <span style={{fontSize:11,color:'#EF4444'}}>{reportError}</span>}
+                  </div>
                 </div>
+                {previewTotal === 0 && <div style={{padding:'20px 0',textAlign:'center',color:'#94A3B8',fontSize:13}}>No records for this report type.</div>}
                 <div style={{overflow:'auto',borderRadius:10,border:'1px solid #E8EBF0'}}>
                   <table style={{width:'100%',borderCollapse:'collapse'}}>
                     <thead>
