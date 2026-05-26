@@ -205,6 +205,14 @@ def build_html(voye_data, comp_data, scraped_at, update_date="22 May 2026"):
     cheaper_pct = round(n_cheaper / total_compared * 100) if total_compared > 0 else 0
     pricier_pct = round(n_pricier / total_compared * 100) if total_compared > 0 else 0
 
+    diff_file = DATA_DIR / "diff_report.json"
+    diff_data = {}
+    if diff_file.exists():
+        with open(diff_file) as f:
+            diff_data = json.load(f)
+    diff_date = (diff_data.get('timestamp') or scraped_at or '')[:10] or 'N/A'
+    diff_json = json.dumps(diff_data, separators=(',',':'))
+
     voye_json = json.dumps(voye_data, separators=(',',':'))
     changes_json = json.dumps(changes, separators=(',',':'))
     stats_json = json.dumps(stats, separators=(',',':'))
@@ -268,6 +276,8 @@ const ALERTS_STALE={alerts_stale_json};
 const RECENT_UPDATES={recent_updates_json};
 const UPDATE_DATE="{update_date}";
 const SCAN_DATE="{scan_date}";
+const DIFF_DATA={diff_json};
+const DIFF_DATE="{diff_date}";
 </script>
 <script type="text/babel">
 const {{ useState, useMemo, useCallback }} = React;
@@ -300,6 +310,13 @@ function App() {{
   const [editMode, setEditMode] = useState(false);
   const [uploadSummary, setUploadSummary] = useState(null);
   const [saveStatus, setSaveStatus] = useState('');
+  const [reportType, setReportType] = useState('comp');
+  const [compFilter, setCompFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState(DIFF_DATE);
+  const [dateTo, setDateTo] = useState(DIFF_DATE);
+  const [previewRows, setPreviewRows] = useState([]);
+  const [previewHeaders, setPreviewHeaders] = useState([]);
+  const [previewTotal, setPreviewTotal] = useState(0);
 
   const filteredChanges = useMemo(() => {{
     let list = ALL_CHANGES;
@@ -372,7 +389,67 @@ function App() {{
     setUploadSummary(null);
   }}, []);
 
-  const tabLabels = {{overview:'Overview',changes:'Price Changes',compare:'vs Competitors',ai:'AI Analysis'}};
+  const buildReportRows = useCallback((type, filter) => {{
+    if (type === 'comp') {{
+      const headers = ['Destination','Package','Days','Competitor','Old Price','New Price','Change %','Direction'];
+      const rows = (DIFF_DATA.changes||[])
+        .filter(c => filter === 'all' || c.competitor === filter)
+        .map(c => [c.country, c.data||'—', c.days+'d', c.competitor.charAt(0).toUpperCase()+c.competitor.slice(1), '$'+c.prev_price.toFixed(2), '$'+c.curr_price.toFixed(2), (c.change_pct>0?'+':'')+c.change_pct+'%', c.direction==='up'?'▲ Up':'▼ Down']);
+      const rawRows = (DIFF_DATA.changes||[])
+        .filter(c => filter === 'all' || c.competitor === filter)
+        .map(c => [c.country, c.data||'—', c.days, c.competitor.charAt(0).toUpperCase()+c.competitor.slice(1), c.prev_price, c.curr_price, c.change_pct/100, c.direction==='up'?'Up':'Down']);
+      return {{headers, rows, rawRows}};
+    }} else {{
+      const headers = ['Destination','Package','Days','Old Price','New Price','Change $','Change %','Date'];
+      const rows = [], rawRows = [];
+      Object.entries(VOYE_DATA).forEach(([country, plans]) => {{
+        plans.filter(p => p.changed && p.price && p.new_price).forEach(p => {{
+          const pct = Math.round((p.new_price - p.price) / p.price * 100);
+          const diff = (p.new_price - p.price).toFixed(2);
+          rows.push([country, p.data||'—', (p.days||'?')+'d', '$'+p.price.toFixed(2), '$'+p.new_price.toFixed(2), (p.new_price>p.price?'+':'')+diff, (pct>0?'+':'')+pct+'%', UPDATE_DATE]);
+          rawRows.push([country, p.data||'—', p.days, p.price, p.new_price, p.new_price-p.price, (p.new_price-p.price)/p.price, UPDATE_DATE]);
+        }});
+      }});
+      return {{headers, rows, rawRows}};
+    }}
+  }}, []);
+
+  const generatePreview = useCallback(() => {{
+    const {{headers, rows}} = buildReportRows(reportType, compFilter);
+    setPreviewHeaders(headers);
+    setPreviewRows(rows.slice(0,10));
+    setPreviewTotal(rows.length);
+  }}, [reportType, compFilter, buildReportRows]);
+
+  const downloadReport = useCallback(() => {{
+    const {{headers, rawRows}} = buildReportRows(reportType, compFilter);
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rawRows]);
+    ws['!cols'] = headers.map((_,i) => ({{wch:i===0?22:13}}));
+    if (reportType === 'comp') {{
+      const numCols = [4,5,6];
+      rawRows.forEach((_,ri) => numCols.forEach(ci => {{
+        const addr = XLSX.utils.encode_cell({{r:ri+1,c:ci}});
+        const cell = ws[addr];
+        if (cell && typeof cell.v === 'number') cell.z = ci===6?'0.0%':'$#,##0.00';
+      }}));
+    }} else {{
+      rawRows.forEach((_,ri) => [3,4,5,6].forEach(ci => {{
+        const addr = XLSX.utils.encode_cell({{r:ri+1,c:ci}});
+        const cell = ws[addr];
+        if (cell && typeof cell.v === 'number') cell.z = ci===6?'0.0%':'$#,##0.00';
+      }}));
+    }}
+    XLSX.utils.book_append_sheet(wb, ws, 'Report');
+    const part = reportType==='comp'
+      ? (compFilter==='all'?'All_Competitors':compFilter.charAt(0).toUpperCase()+compFilter.slice(1))
+      : 'Voye';
+    const d1 = dateFrom.replace(/-/g,'');
+    const d2 = dateTo && dateTo!==dateFrom ? '_to_'+dateTo.replace(/-/g,'') : '';
+    XLSX.writeFile(wb, part+'_Price_Changes_'+d1+d2+'.xlsx');
+  }}, [reportType, compFilter, dateFrom, dateTo, buildReportRows]);
+
+  const tabLabels = {{overview:'Overview',changes:'Price Changes',compare:'vs Competitors',reports:'Reports',ai:'AI Analysis'}};
 
   return (
     <div style={{{{display:'flex',minHeight:'100vh',fontFamily:"'Inter',sans-serif",background:'#F8F9FC'}}}}>
@@ -408,7 +485,7 @@ function App() {{
           </div>
         </div>
         <nav style={{{{padding:'12px 10px',flex:1}}}}>
-          {{[['overview','📊','Overview'],['changes','🔄','Price Changes'],['compare','🔍','vs Competitors'],['ai','🤖','AI Analysis']].map(([id,icon,label]) => (
+          {{[['overview','📊','Overview'],['changes','🔄','Price Changes'],['compare','🔍','vs Competitors'],['reports','📥','Reports'],['ai','🤖','AI Analysis']].map(([id,icon,label]) => (
             <button key={{id}} className={{'nav-item'+(tab===id?' active':'')}} onClick={{() => setTab(id)}}>
               <span style={{{{fontSize:15}}}}>{{icon}}</span>{{label}}
             </button>
@@ -818,6 +895,108 @@ function App() {{
                 {{aiText || 'Click "Generate Analysis" to get strategic insights.'}}
               </div>
             </div>
+          </>}}
+
+          {{/* ── REPORTS ── */}}
+          {{tab === 'reports' && <>
+
+            <div style={{{{marginBottom:20}}}}>
+              <div style={{{{fontSize:13,color:'#64748B'}}}}>Generate and download Excel reports of price changes.</div>
+              <div style={{{{display:'flex',gap:24,marginTop:6,flexWrap:'wrap'}}}}>
+                <span style={{{{fontSize:12,color:'#94A3B8'}}}}>🔄 Competitor scan: {{DIFF_DATE}} · {{(DIFF_DATA.changes||[]).length}} changes</span>
+                <span style={{{{fontSize:12,color:'#94A3B8'}}}}>📋 Voye update: {{UPDATE_DATE}} · {{N_CHANGES}} changes</span>
+              </div>
+            </div>
+
+            {{/* Report type cards */}}
+            <div style={{{{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:20}}}}>
+              <div className="card" style={{{{padding:20,cursor:'pointer',border:reportType==='comp'?'2px solid #6366F1':'1px solid #E8EBF0',transition:'border-color .15s'}}}} onClick={{() => setReportType('comp')}}>
+                <div style={{{{display:'flex',alignItems:'center',gap:10,marginBottom:12}}}}>
+                  <div style={{{{width:38,height:38,borderRadius:10,background:'#DBEAFE',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}}}>📊</div>
+                  <div style={{{{flex:1}}}}>
+                    <div style={{{{fontSize:14,fontWeight:700,color:'#1A1D2E'}}}}>Competitor Price Changes</div>
+                    <div style={{{{fontSize:11,color:'#94A3B8'}}}}>{{(DIFF_DATA.changes||[]).length}} records from last scan</div>
+                  </div>
+                  {{reportType==='comp' && <span style={{{{background:'#EEF2FF',color:'#6366F1',padding:'2px 10px',borderRadius:20,fontSize:11,fontWeight:600}}}}>● Selected</span>}}
+                </div>
+                <div style={{{{fontSize:12,color:'#64748B',lineHeight:1.7,marginBottom:reportType==='comp'?12:0}}}}>Destination · Package · Days · Old Price · New Price · Change % · Direction</div>
+                {{reportType === 'comp' && (
+                  <div style={{{{paddingTop:12,borderTop:'1px solid #F1F5F9'}}}}>
+                    <div style={{{{fontSize:12,fontWeight:600,color:'#374151',marginBottom:6}}}}>Filter by competitor</div>
+                    <select value={{compFilter}} onChange={{e => setCompFilter(e.target.value)}} style={{{{width:'100%',padding:'7px 10px',border:'1px solid #E2E8F0',borderRadius:8,fontSize:13,color:'#1A1D2E',background:'#fff',outline:'none',fontFamily:"'Inter',sans-serif"}}}}>
+                      <option value="all">All Competitors ({{(DIFF_DATA.changes||[]).length}} records)</option>
+                      {{COMPETITORS.map(comp => (
+                        <option key={{comp}} value={{comp}}>{{comp.charAt(0).toUpperCase()+comp.slice(1)}} ({{(DIFF_DATA.changes||[]).filter(c=>c.competitor===comp).length}} records)</option>
+                      ))}}
+                    </select>
+                  </div>
+                )}}
+              </div>
+
+              <div className="card" style={{{{padding:20,cursor:'pointer',border:reportType==='voye'?'2px solid #6366F1':'1px solid #E8EBF0',transition:'border-color .15s'}}}} onClick={{() => setReportType('voye')}}>
+                <div style={{{{display:'flex',alignItems:'center',gap:10,marginBottom:12}}}}>
+                  <div style={{{{width:38,height:38,borderRadius:10,background:'#D1FAE5',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}}}>📋</div>
+                  <div style={{{{flex:1}}}}>
+                    <div style={{{{fontSize:14,fontWeight:700,color:'#1A1D2E'}}}}>Voye Price Changes</div>
+                    <div style={{{{fontSize:11,color:'#94A3B8'}}}}>{{N_CHANGES}} records from last update</div>
+                  </div>
+                  {{reportType==='voye' && <span style={{{{background:'#EEF2FF',color:'#6366F1',padding:'2px 10px',borderRadius:20,fontSize:11,fontWeight:600}}}}>● Selected</span>}}
+                </div>
+                <div style={{{{fontSize:12,color:'#64748B',lineHeight:1.7}}}}>Destination · Package · Days · Old Price · New Price · Change $ · Change % · Date</div>
+              </div>
+            </div>
+
+            {{/* Date range + generate */}}
+            <div className="card" style={{{{padding:20,marginBottom:20}}}}>
+              <div style={{{{fontSize:13,fontWeight:600,color:'#1A1D2E',marginBottom:12}}}}>Date Range <span style={{{{fontSize:11,fontWeight:400,color:'#94A3B8'}}}}>— included in the exported filename</span></div>
+              <div style={{{{display:'flex',gap:16,alignItems:'center',flexWrap:'wrap'}}}}>
+                <div style={{{{display:'flex',alignItems:'center',gap:8}}}}>
+                  <span style={{{{fontSize:12,color:'#64748B',fontWeight:500}}}}>From</span>
+                  <input type="date" value={{dateFrom}} onChange={{e => setDateFrom(e.target.value)}} style={{{{border:'1px solid #E2E8F0',borderRadius:8,padding:'6px 10px',fontSize:13,color:'#1A1D2E',background:'#fff',outline:'none'}}}}/>
+                </div>
+                <div style={{{{display:'flex',alignItems:'center',gap:8}}}}>
+                  <span style={{{{fontSize:12,color:'#64748B',fontWeight:500}}}}>To</span>
+                  <input type="date" value={{dateTo}} onChange={{e => setDateTo(e.target.value)}} style={{{{border:'1px solid #E2E8F0',borderRadius:8,padding:'6px 10px',fontSize:13,color:'#1A1D2E',background:'#fff',outline:'none'}}}}/>
+                </div>
+                <button onClick={{generatePreview}} style={{{{background:'linear-gradient(135deg,#6366F1,#8B5CF6)',border:'none',color:'#fff',padding:'8px 22px',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',boxShadow:'0 2px 8px rgba(99,102,241,.25)'}}}}>Generate Preview</button>
+              </div>
+              <div style={{{{fontSize:11,color:'#94A3B8',marginTop:10}}}}>ℹ Data reflects the latest available scan — date range applies to the filename only.</div>
+            </div>
+
+            {{/* Preview */}}
+            {{previewRows.length > 0 && (
+              <div className="card" style={{{{padding:20}}}}>
+                <div style={{{{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}}}>
+                  <div>
+                    <div style={{{{fontSize:14,fontWeight:700,color:'#1A1D2E'}}}}>Preview</div>
+                    <div style={{{{fontSize:12,color:'#94A3B8'}}}}>Showing first {{previewRows.length}} of {{previewTotal}} records</div>
+                  </div>
+                  <button onClick={{downloadReport}} style={{{{background:'#10B981',border:'none',color:'#fff',padding:'8px 20px',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6,boxShadow:'0 2px 8px rgba(16,185,129,.25)'}}}}>⬇ Download .xlsx</button>
+                </div>
+                <div style={{{{overflow:'auto',borderRadius:10,border:'1px solid #E8EBF0'}}}}>
+                  <table style={{{{width:'100%',borderCollapse:'collapse'}}}}>
+                    <thead>
+                      <tr style={{{{background:'#F8F9FC',borderBottom:'2px solid #E8EBF0'}}}}>
+                        {{previewHeaders.map((h,i) => (
+                          <th key={{i}} style={{{{padding:'9px 14px',fontSize:10,color:'#64748B',fontWeight:600,letterSpacing:'.5px',textTransform:'uppercase',textAlign:'left',whiteSpace:'nowrap'}}}}>{{h}}</th>
+                        ))}}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {{previewRows.map((row,ri) => (
+                        <tr key={{ri}} className="tbl-row" style={{{{borderBottom:'1px solid #F1F5F9'}}}}>
+                          {{row.map((cell,ci) => (
+                            <td key={{ci}} style={{{{padding:'9px 14px',fontSize:12,color:ci===0?'#1A1D2E':(ci===7&&cell==='▲ Up'?'#EF4444':ci===7&&cell==='▼ Down'?'#10B981':'#64748B'),fontWeight:ci===0?600:400,whiteSpace:'nowrap',fontFamily:ci>=3&&ci<=6?"'Roboto Mono',monospace":'inherit'}}}}>{{String(cell)}}</td>
+                          ))}}
+                        </tr>
+                      ))}}
+                    </tbody>
+                  </table>
+                </div>
+                {{previewTotal > 10 && <div style={{{{marginTop:10,fontSize:12,color:'#94A3B8',textAlign:'center'}}}}>… and {{previewTotal-10}} more rows in the full download</div>}}
+              </div>
+            )}}
+
           </>}}
 
         </div>
