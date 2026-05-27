@@ -91,6 +91,8 @@ function App() {
   const [previewRows, setPreviewRows] = useState([]);
   const [previewHeaders, setPreviewHeaders] = useState([]);
   const [previewTotal, setPreviewTotal] = useState(0);
+  const [previewFilter, setPreviewFilter] = useState('all');
+  const [previewExpanded, setPreviewExpanded] = useState(false);
   const [t25Size, setT25Size] = useState(['5GB']);
   const [t25Days, setT25Days] = useState(['7']);
 
@@ -303,8 +305,10 @@ function App() {
     setReportError('');
     const {headers, rows} = buildReportRows(reportType, compFilter);
     setPreviewHeaders(headers);
-    setPreviewRows(rows.slice(0,10));
+    setPreviewRows(rows);
     setPreviewTotal(rows.length);
+    setPreviewFilter('all');
+    setPreviewExpanded(false);
   }, [reportType, compFilter, buildReportRows]);
 
   const downloadReport = useCallback(() => {
@@ -1053,10 +1057,14 @@ function App() {
             {/* Preview */}
             {previewHeaders.length > 0 && (
               <div className="card" style={{padding:20}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+                {/* Header row */}
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
                   <div>
                     <div style={{fontSize:14,fontWeight:700,color:'#1A1D2E'}}>Preview</div>
-                    <div style={{fontSize:12,color:'#94A3B8'}}>{previewTotal} records · showing first {Math.min(previewRows.length,previewTotal)}</div>
+                    <div style={{fontSize:12,color:'#94A3B8'}}>
+                      {previewTotal} records
+                      {reportType==='reco' && previewFilter!=='all' && (' · filtered to ' + previewFilter)}
+                    </div>
                   </div>
                   <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4}}>
                     <button onClick={downloadReport} style={{background:'#10B981',border:'none',color:'#fff',padding:'8px 20px',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6,boxShadow:'0 2px 8px rgba(16,185,129,.25)'}}>⬇ Download .xlsx</button>
@@ -1064,62 +1072,75 @@ function App() {
                   </div>
                 </div>
 
-                {/* Reco summary badges */}
+                {/* Reco: summary badges + filter tabs */}
                 {reportType==='reco' && previewTotal > 0 && (() => {
-                  const allRows = buildReportRows('reco','all').rows;
                   const counts = {};
-                  allRows.forEach(r => { counts[r[7]] = (counts[r[7]]||0)+1; });
+                  previewRows.forEach(r => { counts[r[7]] = (counts[r[7]]||0)+1; });
+                  const tabs = [['all','All',previewTotal,'#6366F1','#EEF2FF'],['Urgent Review','Urgent Review',counts['Urgent Review']||0,'#F97316','#FFF7ED'],['Reduce','Reduce',counts['Reduce']||0,'#EF4444','#FEF2F2'],['Increase','Increase',counts['Increase']||0,'#10B981','#F0FDF4'],['OK','OK',counts['OK']||0,'#94A3B8','#F8FAFC']];
                   return (
-                    <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap'}}>
-                      {[['Urgent Review','#F97316','#FFF7ED'],['Reduce','#EF4444','#FEF2F2'],['Increase','#10B981','#F0FDF4'],['OK','#94A3B8','#F8FAFC']].map(([k,color,bg]) => counts[k] ? (
-                        <span key={k} style={{background:bg,border:'1px solid '+color+'44',color,borderRadius:20,padding:'4px 14px',fontSize:12,fontWeight:600}}>
-                          {k}: {counts[k]}
-                        </span>
-                      ) : null)}
+                    <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
+                      {tabs.filter(([k,,n]) => k==='all' || n>0).map(([k,label,n,color,bg]) => (
+                        <button key={k} onClick={() => { setPreviewFilter(k); setPreviewExpanded(false); }}
+                          style={{padding:'5px 14px',borderRadius:20,border:'1px solid '+(previewFilter===k?color:color+'44'),background:previewFilter===k?color:bg,color:previewFilter===k?'#fff':color,fontSize:12,fontWeight:600,cursor:'pointer'}}>
+                          {label} <span style={{opacity:.75}}>{n}</span>
+                        </button>
+                      ))}
                     </div>
                   );
                 })()}
 
                 {previewTotal === 0 && <div style={{padding:'20px 0',textAlign:'center',color:'#94A3B8',fontSize:13}}>No records for this report type.</div>}
-                {previewTotal > 0 && (
-                  <div style={{overflow:'auto',borderRadius:10,border:'1px solid #E8EBF0'}}>
-                    <table style={{width:'100%',borderCollapse:'collapse'}}>
-                      <thead>
-                        <tr style={{background:'#F8F9FC',borderBottom:'2px solid #E8EBF0'}}>
-                          {previewHeaders.map((h,i) => (
-                            <th key={i} style={{padding:'9px 14px',fontSize:10,color:'#64748B',fontWeight:600,letterSpacing:'.5px',textTransform:'uppercase',textAlign:'left',whiteSpace:'nowrap'}}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {previewRows.map((row,ri) => {
-                          const rec = reportType==='reco' ? row[7] : null;
-                          const rowBg = rec==='Urgent Review'?'#FFF7ED':rec==='Reduce'?'#FEF2F2':rec==='Increase'?'#F0FDF4':'#fff';
-                          return (
-                            <tr key={ri} style={{background:rowBg,borderBottom:'1px solid #F1F5F9'}}>
-                              {row.map((cell,ci) => {
-                                let color = '#64748B';
-                                if (ci===0) color='#1A1D2E';
-                                else if (reportType==='reco' && ci===7) {
-                                  color = rec==='Urgent Review'?'#F97316':rec==='Reduce'?'#EF4444':rec==='Increase'?'#10B981':'#94A3B8';
-                                }
-                                else if (ci===7 && cell==='▲ Up') color='#EF4444';
-                                else if (ci===7 && cell==='▼ Down') color='#10B981';
-                                const isMono = reportType==='reco' ? (ci>=3&&ci<=5)||ci===8 : ci>=3&&ci<=6;
-                                return (
-                                  <td key={ci} style={{padding:'9px 14px',fontSize:12,color,fontWeight:ci===0||ci===7?600:400,whiteSpace:'nowrap',fontFamily:isMono?"'Roboto Mono',monospace":'inherit'}}>
-                                    {String(cell)}
-                                  </td>
-                                );
-                              })}
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                {previewTotal > 10 && <div style={{marginTop:10,fontSize:12,color:'#94A3B8',textAlign:'center'}}>… and {previewTotal-10} more rows in the full download</div>}
+                {previewTotal > 0 && (() => {
+                  const filtered = reportType==='reco' && previewFilter!=='all'
+                    ? previewRows.filter(r => r[7]===previewFilter)
+                    : previewRows;
+                  const displayed = previewExpanded ? filtered : filtered.slice(0,10);
+                  const remaining = filtered.length - displayed.length;
+                  return (<>
+                    <div style={{overflow:'auto',borderRadius:10,border:'1px solid #E8EBF0'}}>
+                      <table style={{width:'100%',borderCollapse:'collapse'}}>
+                        <thead>
+                          <tr style={{background:'#F8F9FC',borderBottom:'2px solid #E8EBF0'}}>
+                            {previewHeaders.map((h,i) => (
+                              <th key={i} style={{padding:'9px 14px',fontSize:10,color:'#64748B',fontWeight:600,letterSpacing:'.5px',textTransform:'uppercase',textAlign:'left',whiteSpace:'nowrap'}}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {displayed.map((row,ri) => {
+                            const rec = reportType==='reco' ? row[7] : null;
+                            const rowBg = rec==='Urgent Review'?'#FFF7ED':rec==='Reduce'?'#FEF2F2':rec==='Increase'?'#F0FDF4':'#fff';
+                            return (
+                              <tr key={ri} style={{background:rowBg,borderBottom:'1px solid #F1F5F9'}}>
+                                {row.map((cell,ci) => {
+                                  let color='#64748B';
+                                  if (ci===0) color='#1A1D2E';
+                                  else if (reportType==='reco'&&ci===7) color=rec==='Urgent Review'?'#F97316':rec==='Reduce'?'#EF4444':rec==='Increase'?'#10B981':'#94A3B8';
+                                  else if (ci===7&&cell==='▲ Up') color='#EF4444';
+                                  else if (ci===7&&cell==='▼ Down') color='#10B981';
+                                  const isMono=reportType==='reco'?(ci>=3&&ci<=5)||ci===8:ci>=3&&ci<=6;
+                                  return <td key={ci} style={{padding:'9px 14px',fontSize:12,color,fontWeight:ci===0||ci===7?600:400,whiteSpace:'nowrap',fontFamily:isMono?"'Roboto Mono',monospace":'inherit'}}>{String(cell)}</td>;
+                                })}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div style={{marginTop:10,display:'flex',justifyContent:'center',gap:10}}>
+                      {!previewExpanded && remaining > 0 && (
+                        <button onClick={() => setPreviewExpanded(true)} style={{background:'#F8F9FC',border:'1px solid #E2E8F0',color:'#6366F1',padding:'6px 20px',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer'}}>
+                          View More ({remaining} more rows)
+                        </button>
+                      )}
+                      {previewExpanded && (
+                        <button onClick={() => setPreviewExpanded(false)} style={{background:'#F8F9FC',border:'1px solid #E2E8F0',color:'#64748B',padding:'6px 20px',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer'}}>
+                          Collapse
+                        </button>
+                      )}
+                    </div>
+                  </>);
+                })()}
               </div>
             )}
 
