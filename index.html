@@ -303,7 +303,7 @@ function App() {
 
   const generatePreview = useCallback(() => {
     setReportError('');
-    const {headers, rows} = buildReportRows(reportType, compFilter);
+    const {headers, rows} = buildReportRows(reportType, compFilter, dateFrom, dateTo);
     setPreviewHeaders(headers);
     setPreviewRows(rows);
     setPreviewTotal(rows.length);
