@@ -723,6 +723,17 @@ function App() {
                 </div>
                 <div style={{fontSize:12,color:'#64748B',lineHeight:1.7}}>Destination · Package · Days · Old Price · New Price · Change $ · Change % · Date</div>
               </div>
+              <div className="card" style={{padding:20,cursor:'pointer',border:reportType==='reco'?'2px solid #6366F1':'1px solid #E8EBF0',transition:'border-color .15s'}} onClick={() => setReportType('reco')}>
+                <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
+                  <div style={{width:38,height:38,borderRadius:10,background:'#FEF3C7',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>💡</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:14,fontWeight:700,color:'#1A1D2E'}}>Pricing Recommendations</div>
+                    <div style={{fontSize:11,color:'#94A3B8'}}>AI-powered repricing suggestions</div>
+                  </div>
+                  {reportType==='reco' && <span style={{background:'#EEF2FF',color:'#6366F1',padding:'2px 10px',borderRadius:20,fontSize:11,fontWeight:600}}>● Selected</span>}
+                </div>
+                <div style={{fontSize:12,color:'#64748B',lineHeight:1.7}}>Destination · Package · Days · Voye Price · Cheapest Comp · % Diff · Recommendation · Suggested Price</div>
+              </div>
             </div>
 
             {/* Date range + generate */}
