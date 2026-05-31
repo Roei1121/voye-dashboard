@@ -348,32 +348,6 @@ function App() {
               ))}
             </div>
 
-            {/* Top 25 Tourist Destinations */}
-            {(()=>{
-              const TOP25=['United States','Italy','Greece','France','Georgia','United Kingdom','Cyprus','Germany','Thailand','United Arab Emirates','Vietnam','Philippines','Czech Republic','Hungary','Japan','Spain','Portugal','Netherlands','Romania','Poland','Austria','Europe','Asia','Mexico','Canada'];
-              const [pkgFilter,setPkgFilter]=React.useState('5GB');
-              const [daysFilter,setDaysFilter]=React.useState(7);
-              const pkgSizes=[...new Set(Object.values(VOYE_DATA).flat().map(p=>p.data).filter(Boolean))].sort();
-              const daysSizes=[...new Set(Object.values(VOYE_DATA).flat().map(p=>p.days).filter(Boolean))].sort((a,b)=>a-b);
-              const comps=['airalo','holafly','saily','esimo'];
-              return <div className="card" style={{padding:20,marginBottom:20}}>
-                <div style={{fontSize:15,fontWeight:700,color:'#1A1D2E',marginBottom:4}}>Top 25 Tourist Destinations</div>
-                <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
-                  <span style={{fontSize:11,fontWeight:600,color:'#64748B',alignSelf:'center'}}>PACKAGE</span>
-                  {pkgSizes.map(s=><button key={s} onClick={()=>setPkgFilter(s)} style={{padding:'3px 10px',borderRadius:20,border:'1px solid '+(pkgFilter===s?'#6366F1':'#E2E8F0'),background:pkgFilter===s?'#6366F1':'#fff',color:pkgFilter===s?'#fff':'#64748B',fontSize:12,cursor:'pointer'}}>{s}</button>)}
-                </div>
-                <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
-                  <span style={{fontSize:11,fontWeight:600,color:'#64748B',alignSelf:'center'}}>DAYS</span>
-                  {daysSizes.map(d=><button key={d} onClick={()=>setDaysFilter(d)} style={{padding:'3px 10px',borderRadius:20,border:'1px solid '+(daysFilter===d?'#6366F1':'#E2E8F0'),background:daysFilter===d?'#6366F1':'#fff',color:daysFilter===d?'#fff':'#64748B',fontSize:12,cursor:'pointer'}}>{d}d</button>)}
-                </div>
-                <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
-                  <thead><tr style={{borderBottom:'2px solid #E8EBF0'}}><th style={{textAlign:'left',padding:'6px 8px',color:'#94A3B8',fontWeight:600,fontSize:11}}>DESTINATION</th><th style={{padding:'6px 8px',color:'#6366F1',fontWeight:700,fontSize:11}}>VOYE</th>{comps.map(c=><th key={c} style={{padding:'6px 8px',color:'#94A3B8',fontWeight:600,fontSize:11}}>{c.toUpperCase()}</th>)}<th style={{padding:'6px 8px',color:'#94A3B8',fontWeight:600,fontSize:11}}>STATUS</th></tr></thead>
-                  <tbody>{TOP25.map((dest,i)=>{const vp=(VOYE_DATA[dest]||[]).find(p=>p.data===pkgFilter&&p.days===daysFilter);const voye=vp?vp.price:null;const cpPrices=comps.map(c=>{const m=(COMP_DATA[c]||{})[dest]||[];const f=m.find(x=>x.data===pkgFilter&&x.days===daysFilter);return f?f.price:null;});const allPrices=[voye,...cpPrices].filter(x=>x!==null);const minP=allPrices.length?Math.min(...allPrices):null;const maxP=allPrices.length?Math.max(...allPrices):null;const status=voye===null?'N/A':voye===minP?'Cheapest':voye===maxP?'Priciest':'Middle';const sc=status==='Cheapest'?'#10B981':status==='Priciest'?'#EF4444':'#F59E0B';return <tr key={i} style={{borderBottom:'1px solid #F5F5F5'}}><td style={{padding:'7px 8px',fontWeight:500}}>{i+1}. {dest}</td><td style={{padding:'7px 8px',textAlign:'center',color:'#6366F1',fontWeight:700}}>{voye?'$'+voye.toFixed(2):'—'}</td>{cpPrices.map((p,j)=><td key={j} style={{padding:'7px 8px',textAlign:'center',color:'#64748B'}}>{p?'$'+p.toFixed(2):'—'}</td>)}<td style={{padding:'7px 8px',textAlign:'center'}}><span style={{background:sc+'20',color:sc,padding:'2px 10px',borderRadius:20,fontSize:11,fontWeight:600}}>{status}</span></td></tr>;})}
-                  </tbody>
-                </table>
-              </div>;
-            })()}
-
             {/* Advantage + Weak Markets */}
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:20}}>
               <div className="card" style={{padding:20}}>
