@@ -182,6 +182,29 @@ function App() {
         });
       });
       return {headers, rows, rawRows};
+    } else {
+      const headers = ['Destination','Package','Days','Voye Price','Cheapest Comp','Cheapest Price','% Diff','Recommendation','Suggested Price'];
+      const rows = [], rawRows = [];
+      Object.entries(VOYE_DATA).forEach(([country, plans]) => {
+        plans.forEach(p => {
+          const competitors = ['airalo','holafly','saily','esimo'];
+          const prices = competitors.map(comp => {
+            const cp = (COMP_DATA[comp]||{})[country]||[];
+            const match = cp.find(x=>x.data===p.data&&x.days===p.days);
+            return match ? match.price : null;
+          }).filter(x=>x!==null);
+          if (prices.length === 0) return;
+          const cheapest = Math.min(...prices);
+          const cheapestComp = competitors[prices.indexOf(cheapest)] || '—';
+          const pct = Math.round((p.price - cheapest) / cheapest * 100);
+          let rec = 'OK', suggested = p.price;
+          if (pct > 15) { rec = 'Reduce'; suggested = +(cheapest * 0.95).toFixed(2); }
+          else if (pct < -30) { rec = 'Increase'; suggested = +((p.price + cheapest) / 2).toFixed(2); }
+          rows.push([country, p.data||'—', (p.days||'?')+'d', '$'+p.price?.toFixed(2) ?? "N/A", cheapestComp, '$'+cheapest?.toFixed(2) ?? "N/A", (pct>0?'+':'')+pct+'%', rec, '$'+suggested]);
+          rawRows.push([country, p.data||'—', p.days, p.price, cheapestComp, cheapest, pct/100, rec, suggested]);
+        });
+      });
+      return {headers, rows, rawRows};
     }
   }, []);
 
