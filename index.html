@@ -182,7 +182,7 @@ function App() {
         });
       });
       return {headers, rows, rawRows};
-    } else if (type === 'reco') {
+    } else if (type === 'reco') {{
       const headers = ['Destination','Package','Days','Voye Price','Cheapest Comp','Cheapest Price','% Diff','Recommendation','Suggested Price'];
       const rows = [], rawRows = [];
       Object.entries(VOYE_DATA).forEach(([country, plans]) => {
