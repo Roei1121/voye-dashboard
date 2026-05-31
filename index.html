@@ -698,7 +698,7 @@ function App() {
                   <div style={{width:30,height:30,borderRadius:8,background:'#FEF3C7',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>🕐</div>
                   <div style={{fontSize:14,fontWeight:700,color:'#1A1D2E'}}>Last Price Update</div>
                 </div>
-                <div style={{fontSize:12,color:'#94A3B8',marginBottom:16}}>{UPDATE_DATE} · destinations with most plan changes</div>
+                <div style={{fontSize:12,color:'#94A3B8',marginBottom:16}}>{UPDATE_DATE} · destinations with most plan changes · {(DIFF_DATA.changes||[]).filter(c=>Math.abs(c.change_pct)>=10).length} significant changes</div>
                 {RECENT_UPDATES.map((m,i) => (
                   <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 0',borderBottom:'1px solid #F1F5F9'}}>
                     <span style={{fontSize:13,fontWeight:600,color:'#1A1D2E'}}>{m.country}</span>
