@@ -31,22 +31,21 @@ const N_DN=0;
 const N_CHANGES=0;
 const N_COUNTRIES=162;
 const N_PLANS=1061;
-const N_CHEAPER=500;
-const N_PRICIER=211;
-const N_NEEDS_UPDATE=128;
-const CHEAPER_PCT=70;
-const PRICIER_PCT=30;
-const STRONG_MARKETS=[{"country":"India","adv":64,"plans":8},{"country":"New Zealand","adv":61,"plans":2},{"country":"Hong Kong","adv":59,"plans":2},{"country":"France","adv":56,"plans":7},{"country":"Austria","adv":56,"plans":7},{"country":"Israel","adv":55,"plans":2},{"country":"China","adv":54,"plans":8},{"country":"Indonesia","adv":54,"plans":8},{"country":"Taiwan","adv":54,"plans":8},{"country":"Denmark","adv":54,"plans":8},{"country":"Estonia","adv":54,"plans":8},{"country":"Ireland","adv":54,"plans":8}];
-const WEAK_MARKETS=[{"country":"Tanzania","adv":-240,"plans":2},{"country":"Ghana","adv":-226,"plans":2},{"country":"Monaco","adv":-188,"plans":2},{"country":"Cameroon","adv":-187,"plans":2},{"country":"Zambia","adv":-156,"plans":2},{"country":"Uganda","adv":-142,"plans":2},{"country":"Costa Rica","adv":-129,"plans":2},{"country":"Brunei","adv":-124,"plans":2},{"country":"Fiji","adv":-117,"plans":2},{"country":"Nepal","adv":-115,"plans":1},{"country":"Congo","adv":-110,"plans":2},{"country":"Kazakhstan","adv":-79,"plans":3}];
+const N_CHEAPER=507;
+const N_PRICIER=488;
+const N_NEEDS_UPDATE=413;
+const CHEAPER_PCT=51;
+const PRICIER_PCT=49;
+const STRONG_MARKETS=[{"country":"Belarus","adv":64,"plans":3},{"country":"Guam","adv":61,"plans":4},{"country":"North Macedonia","adv":52,"plans":3},{"country":"Global","adv":46,"plans":10},{"country":"Maldives","adv":45,"plans":4},{"country":"North America","adv":42,"plans":10},{"country":"Hong Kong","adv":38,"plans":4},{"country":"India","adv":36,"plans":10},{"country":"Israel","adv":32,"plans":4},{"country":"Montenegro","adv":31,"plans":4},{"country":"Austria","adv":29,"plans":10},{"country":"Serbia","adv":29,"plans":4}];
+const WEAK_MARKETS=[{"country":"Tanzania","adv":-168,"plans":2},{"country":"Martinique","adv":-166,"plans":10},{"country":"Monaco","adv":-156,"plans":2},{"country":"Ghana","adv":-154,"plans":2},{"country":"Cameroon","adv":-132,"plans":2},{"country":"Congo","adv":-120,"plans":2},{"country":"Nepal","adv":-120,"plans":1},{"country":"Zambia","adv":-117,"plans":2},{"country":"Brunei","adv":-111,"plans":2},{"country":"Uganda","adv":-108,"plans":2},{"country":"Costa Rica","adv":-106,"plans":2},{"country":"Anguilla","adv":-105,"plans":7}];
 const MAX_STRONG_ADV=64;
-const MAX_WEAK_ADV=240;
-const COMP_BREAKDOWN=[{"name":"airalo","cheaper":314,"equal":16,"pricier":156,"total":486},{"name":"holafly","cheaper":122,"equal":0,"pricier":4,"total":126},{"name":"esimo","cheaper":160,"equal":88,"pricier":18,"total":266},{"name":"saily","cheaper":283,"equal":20,"pricier":128,"total":431}];
-const ALERTS_OVERPRICED=[{"country":"Tanzania","data":"3GB","days":7,"voye":41.0,"avg_comp":11.5,"gap":257},{"country":"Ghana","data":"3GB","days":7,"voye":41.0,"avg_comp":12.0,"gap":242},{"country":"Tanzania","data":"5GB","days":15,"voye":67.0,"avg_comp":20.66,"gap":224},{"country":"Ghana","data":"5GB","days":15,"voye":67.0,"avg_comp":21.66,"gap":209},{"country":"Cameroon","data":"3GB","days":7,"voye":41.0,"avg_comp":14.0,"gap":193},{"country":"Monaco","data":"3GB","days":7,"voye":41.0,"avg_comp":14.24,"gap":188},{"country":"Monaco","data":"5GB","days":15,"voye":67.0,"avg_comp":23.33,"gap":187},{"country":"Cameroon","data":"5GB","days":15,"voye":67.0,"avg_comp":23.83,"gap":181}];
-const ALERTS_MATCHES=[{"country":"Greece","data":"50GB","days":30,"voye":42.0,"comp":"airalo","comp_price":42.0},{"country":"Dominican Republic","data":"15GB","days":30,"voye":75.0,"comp":"esimo","comp_price":75.0},{"country":"Dominican Republic","data":"3GB","days":7,"voye":21.0,"comp":"saily","comp_price":20.99},{"country":"Dominican Republic","data":"5GB","days":15,"voye":30.0,"comp":"esimo","comp_price":30.0},{"country":"Dominican Republic","data":"Unlimited","days":10,"voye":49.0,"comp":"airalo","comp_price":49.0},{"country":"Peru","data":"15GB","days":30,"voye":75.0,"comp":"esimo","comp_price":75.0},{"country":"Peru","data":"5GB","days":15,"voye":30.0,"comp":"esimo","comp_price":30.0},{"country":"North America","data":"3GB","days":7,"voye":15.0,"comp":"airalo","comp_price":15.0}];
+const MAX_WEAK_ADV=168;
+const COMP_BREAKDOWN=[{"name":"airalo","cheaper":123,"equal":30,"pricier":755,"total":908},{"name":"holafly","cheaper":589,"equal":5,"pricier":185,"total":779},{"name":"esimo","cheaper":160,"equal":88,"pricier":18,"total":266},{"name":"saily","cheaper":249,"equal":23,"pricier":597,"total":869}];
+const ALERTS_OVERPRICED=[{"country":"Martinique","data":"Unlimited","days":30,"voye":99.0,"avg_comp":15.93,"gap":521},{"country":"United Kingdom","data":"Unlimited","days":30,"voye":63.0,"avg_comp":15.24,"gap":313},{"country":"Martinique","data":"Unlimited","days":20,"voye":79.0,"avg_comp":19.4,"gap":307},{"country":"Saint Martin","data":"Unlimited","days":30,"voye":99.0,"avg_comp":25.45,"gap":289},{"country":"Anguilla","data":"Unlimited","days":3,"voye":25.0,"avg_comp":7.0,"gap":257},{"country":"Martinique","data":"Unlimited","days":15,"voye":69.0,"avg_comp":19.4,"gap":256},{"country":"Algeria","data":"8GB","days":30,"voye":49.0,"avg_comp":14.5,"gap":238},{"country":"Cayman Islands","data":"Unlimited","days":15,"voye":69.0,"avg_comp":20.5,"gap":237}];
+const ALERTS_MATCHES=[{"country":"Portugal","data":"10GB","days":15,"voye":10.0,"comp":"airalo","comp_price":10.0},{"country":"United Arab Emirates","data":"20GB","days":30,"voye":33.0,"comp":"airalo","comp_price":33.0},{"country":"United Arab Emirates","data":"4GB","days":7,"voye":9.0,"comp":"airalo","comp_price":9.0},{"country":"United Kingdom","data":"6GB","days":7,"voye":9.0,"comp":"airalo","comp_price":9.0},{"country":"Thailand","data":"10GB","days":15,"voye":10.0,"comp":"airalo","comp_price":10.0},{"country":"Thailand","data":"Unlimited","days":7,"voye":19.0,"comp":"saily","comp_price":18.99},{"country":"Greece","data":"50GB","days":30,"voye":42.0,"comp":"airalo","comp_price":42.0},{"country":"South Korea","data":"6GB","days":7,"voye":9.0,"comp":"airalo","comp_price":9.0}];
 const ALERTS_STALE=["Albania","Algeria","Andorra","Anguilla","Antigua and Barbuda","Argentina","Armenia","Aruba","Asia","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Bermuda","Bolivia","Bosnia and Herzegovina","Brazil","British Virgin Islands","Brunei","Bulgaria","Cambodia","Cameroon","Canada","Caribbean","Cayman Islands","Chile","China","Colombia","Congo","Costa Rica","Cote D\u2019Ivoire (Ivory Coast)","Croatia","Cruises","Cyprus","Czech Republic","Denmark","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Estonia","Europe","Faroe Islands","Fiji","Finland","France","French Polynesia","French West Indies","Georgia","Germany","Ghana","Gibraltar","Global","Greece","Grenada","Guam","Guatemala","Guyana","Haiti","Honduras","Hong Kong","Hungary","Iceland","India","Indonesia","Ireland","Israel","Italy","Jamaica","Japan","Jersey / Guernsey","Jordan","Kazakhstan","Kenya","Kuwait","Laos","Latin America","Latvia","Liberia","Liechtenstein","Lithuania","Luxembourg","Macau","Madagascar","Malawi","Malaysia","Maldives","Malta","Martinique","Mauritius","Mayotte (Reunion)","Mexico","Middle East","Moldova","Monaco","Montenegro","Montserrat","Morocco","Mozambique","Nepal","Netherlands","Netherlands Antilles","New Zealand","Nigeria","North America","North Macedonia","Norway","Oman","Pakistan","Panama","Paraguay","Peru","Philippines","Poland","Portugal","Puerto Rico","Qatar","Reunion","Romania","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Martin","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","St. Vincent and The Grenadines","Suriname","Sweden","Switzerland","Taiwan","Tanzania","Thailand","Trinidad and Tobago","Tunisia","Turkey","Turks and Caicos Islands","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uzbekistan","Vietnam","Zambia"];
 const RECENT_UPDATES=[];
-const TOP25_DATA=["United States","Italy","Greece","France","Georgia","United Kingdom","Cyprus","Germany","Thailand","United Arab Emirates","Vietnam","Philippines","Czech Republic","Hungary","Japan","Spain","Portugal","Netherlands","Romania","Poland","Austria","Europe","Asia","Mexico","Canada"];
-const UPDATE_DATE="31 May 2026";
+const UPDATE_DATE="22 May 2026";
 const SCAN_DATE="2026-05-31";
 const DIFF_DATA={"timestamp":"2026-05-31T14:43:27.183501","total_changes":178,"changes":[{"competitor":"saily","country":"Armenia","data":"1GB","days":7,"prev_price":5.99,"curr_price":8.99,"change_pct":50.1,"direction":"up"},{"competitor":"airalo","country":"Dominican Republic","data":"Unlimited","days":15,"prev_price":60.0,"curr_price":31.0,"change_pct":-48.3,"direction":"down"},{"competitor":"saily","country":"Algeria","data":"1GB","days":7,"prev_price":6.29,"curr_price":8.99,"change_pct":42.9,"direction":"up"},{"competitor":"airalo","country":"North America","data":"10GB","days":7,"prev_price":42.5,"curr_price":33.0,"change_pct":-22.4,"direction":"down"},{"competitor":"airalo","country":"North America","data":"10GB","days":15,"prev_price":44.0,"curr_price":35.0,"change_pct":-20.5,"direction":"down"},{"competitor":"airalo","country":"North America","data":"10GB","days":30,"prev_price":46.0,"curr_price":37.0,"change_pct":-19.6,"direction":"down"},{"competitor":"airalo","country":"Italy","data":"5GB","days":7,"prev_price":12.0,"curr_price":10.0,"change_pct":-16.7,"direction":"down"},{"competitor":"airalo","country":"North America","data":"1GB","days":3,"prev_price":6.5,"curr_price":5.5,"change_pct":-15.4,"direction":"down"},{"competitor":"airalo","country":"Spain","data":"3GB","days":3,"prev_price":6.5,"curr_price":5.5,"change_pct":-15.4,"direction":"down"},{"competitor":"airalo","country":"Spain","data":"3GB","days":7,"prev_price":7.0,"curr_price":6.0,"change_pct":-14.3,"direction":"down"},{"competitor":"airalo","country":"Spain","data":"20GB","days":15,"prev_price":22.0,"curr_price":19.0,"change_pct":-13.6,"direction":"down"},{"competitor":"airalo","country":"Spain","data":"50GB","days":30,"prev_price":45.0,"curr_price":39.0,"change_pct":-13.3,"direction":"down"},{"competitor":"airalo","country":"Brazil","data":"10GB","days":7,"prev_price":23.0,"curr_price":20.0,"change_pct":-13.0,"direction":"down"},{"competitor":"airalo","country":"Italy","data":"10GB","days":7,"prev_price":19.5,"curr_price":17.0,"change_pct":-12.8,"direction":"down"},{"competitor":"airalo","country":"North America","data":"3GB","days":3,"prev_price":16.0,"curr_price":14.0,"change_pct":-12.5,"direction":"down"},{"competitor":"airalo","country":"Italy","data":"5GB","days":15,"prev_price":12.5,"curr_price":11.0,"change_pct":-12.0,"direction":"down"},{"competitor":"airalo","country":"Italy","data":"3GB","days":7,"prev_price":8.5,"curr_price":7.5,"change_pct":-11.8,"direction":"down"},{"competitor":"airalo","country":"North America","data":"3GB","days":7,"prev_price":17.0,"curr_price":15.0,"change_pct":-11.8,"direction":"down"},{"competitor":"airalo","country":"Israel","data":"1GB","days":7,"prev_price":4.5,"curr_price":4.0,"change_pct":-11.1,"direction":"down"},{"competitor":"airalo","country":"Spain","data":"5GB","days":7,"prev_price":9.0,"curr_price":8.0,"change_pct":-11.1,"direction":"down"},{"competitor":"airalo","country":"Spain","data":"20GB","days":30,"prev_price":22.5,"curr_price":20.0,"change_pct":-11.1,"direction":"down"},{"competitor":"airalo","country":"Brazil","data":"10GB","days":15,"prev_price":23.5,"curr_price":21.0,"change_pct":-10.6,"direction":"down"},{"competitor":"airalo","country":"Italy","data":"Unlimited","days":5,"prev_price":19.0,"curr_price":17.0,"change_pct":-10.5,"direction":"down"},{"competitor":"airalo","country":"Spain","data":"5GB","days":15,"prev_price":9.5,"curr_price":8.5,"change_pct":-10.5,"direction":"down"},{"competitor":"airalo","country":"Spain","data":"10GB","days":7,"prev_price":14.5,"curr_price":13.0,"change_pct":-10.3,"direction":"down"},{"competitor":"airalo","country":"Italy","data":"10GB","days":15,"prev_price":20.0,"curr_price":18.0,"change_pct":-10.0,"direction":"down"},{"competitor":"airalo","country":"Spain","data":"10GB","days":15,"prev_price":15.0,"curr_price":13.5,"change_pct":-10.0,"direction":"down"},{"competitor":"airalo","country":"Spain","data":"5GB","days":30,"prev_price":10.0,"curr_price":9.0,"change_pct":-10.0,"direction":"down"},{"competitor":"airalo","country":"Italy","data":"Unlimited","days":30,"prev_price":72.0,"curr_price":65.0,"change_pct":-9.7,"direction":"down"},{"competitor":"airalo","country":"Spain","data":"10GB","days":30,"prev_price":15.5,"curr_price":14.0,"change_pct":-9.7,"direction":"down"},{"competitor":"airalo","country":"Italy","data":"20GB","days":15,"prev_price":27.5,"curr_price":25.0,"change_pct":-9.1,"direction":"down"},{"competitor":"airalo","country":"Italy","data":"20GB","days":30,"prev_price":28.5,"curr_price":26.0,"change_pct":-8.8,"direction":"down"},{"competitor":"airalo","country":"Italy","data":"Unlimited","days":15,"prev_price":49.0,"curr_price":45.0,"change_pct":-8.2,"direction":"down"},{"competitor":"airalo","country":"Spain","data":"Unlimited","days":15,"prev_price":49.0,"curr_price":45.0,"change_pct":-8.2,"direction":"down"},{"competitor":"airalo","country":"Brazil","data":"10GB","days":30,"prev_price":25.0,"curr_price":23.0,"change_pct":-8.0,"direction":"down"},{"competitor":"airalo","country":"Brazil","data":"5GB","days":7,"prev_price":13.0,"curr_price":12.0,"change_pct":-7.7,"direction":"down"},{"competitor":"airalo","country":"Italy","data":"5GB","days":30,"prev_price":13.0,"curr_price":12.0,"change_pct":-7.7,"direction":"down"},{"competitor":"airalo","country":"Spain","data":"Unlimited","days":30,"prev_price":72.5,"curr_price":67.0,"change_pct":-7.6,"direction":"down"},{"competitor":"airalo","country":"Brazil","data":"5GB","days":15,"prev_price":13.5,"curr_price":12.5,"change_pct":-7.4,"direction":"down"},{"competitor":"airalo","country":"Italy","data":"Unlimited","days":7,"prev_price":27.0,"curr_price":25.0,"change_pct":-7.4,"direction":"down"},{"competitor":"airalo","country":"Spain","data":"Unlimited","days":7,"prev_price":27.0,"curr_price":25.0,"change_pct":-7.4,"direction":"down"},{"competitor":"airalo","country":"Italy","data":"10GB","days":30,"prev_price":20.5,"curr_price":19.0,"change_pct":-7.3,"direction":"down"},{"competitor":"airalo","country":"Brazil","data":"5GB","days":30,"prev_price":14.0,"curr_price":13.0,"change_pct":-7.1,"direction":"down"},{"competitor":"airalo","country":"Italy","data":"3GB","days":3,"prev_price":7.5,"curr_price":7.0,"change_pct":-6.7,"direction":"down"},{"competitor":"airalo","country":"North America","data":"5GB","days":7,"prev_price":23.5,"curr_price":22.0,"change_pct":-6.4,"direction":"down"},{"competitor":"airalo","country":"Brazil","data":"Unlimited","days":15,"prev_price":49.0,"curr_price":46.0,"change_pct":-6.1,"direction":"down"},{"competitor":"airalo","country":"North America","data":"5GB","days":15,"prev_price":24.5,"curr_price":23.0,"change_pct":-6.1,"direction":"down"},{"competitor":"airalo","country":"North America","data":"5GB","days":30,"prev_price":25.5,"curr_price":24.0,"change_pct":-5.9,"direction":"down"},{"competitor":"airalo","country":"Brazil","data":"Unlimited","days":7,"prev_price":26.5,"curr_price":25.0,"change_pct":-5.7,"direction":"down"},{"competitor":"airalo","country":"Italy","data":"Unlimited","days":10,"prev_price":35.0,"curr_price":33.0,"change_pct":-5.7,"direction":"down"},{"competitor":"airalo","country":"Spain","data":"Unlimited","days":10,"prev_price":35.0,"curr_price":33.0,"change_pct":-5.7,"direction":"down"},{"competitor":"airalo","country":"Brazil","data":"20GB","days":15,"prev_price":37.0,"curr_price":35.0,"change_pct":-5.4,"direction":"down"},{"competitor":"airalo","country":"Brazil","data":"3GB","days":3,"prev_price":9.5,"curr_price":9.0,"change_pct":-5.3,"direction":"down"},{"competitor":"airalo","country":"Brazil","data":"20GB","days":30,"prev_price":38.0,"curr_price":36.0,"change_pct":-5.3,"direction":"down"},{"competitor":"airalo","country":"Spain","data":"Unlimited","days":5,"prev_price":19.0,"curr_price":18.0,"change_pct":-5.3,"direction":"down"},{"competitor":"airalo","country":"Latin America","data":"Unlimited","days":15,"prev_price":null,"curr_price":61.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Latin America","data":"Unlimited","days":30,"prev_price":null,"curr_price":98.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"1GB","days":3,"prev_price":null,"curr_price":4.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"3GB","days":3,"prev_price":null,"curr_price":7.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"3GB","days":7,"prev_price":null,"curr_price":7.5,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"5GB","days":7,"prev_price":null,"curr_price":10.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"10GB","days":7,"prev_price":null,"curr_price":17.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"5GB","days":15,"prev_price":null,"curr_price":11.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"10GB","days":15,"prev_price":null,"curr_price":18.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"20GB","days":15,"prev_price":null,"curr_price":25.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"5GB","days":30,"prev_price":null,"curr_price":12.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"10GB","days":30,"prev_price":null,"curr_price":19.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"20GB","days":30,"prev_price":null,"curr_price":26.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"50GB","days":30,"prev_price":null,"curr_price":35.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"Unlimited","days":3,"prev_price":null,"curr_price":11.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"Unlimited","days":4,"prev_price":null,"curr_price":19.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"Unlimited","days":5,"prev_price":null,"curr_price":17.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"Unlimited","days":7,"prev_price":null,"curr_price":25.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"Unlimited","days":10,"prev_price":null,"curr_price":33.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"Unlimited","days":15,"prev_price":null,"curr_price":45.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"Monaco","data":"Unlimited","days":30,"prev_price":null,"curr_price":65.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"North America","data":"20GB","days":15,"prev_price":null,"curr_price":36.5,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"North America","data":"20GB","days":30,"prev_price":null,"curr_price":49.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"North America","data":"50GB","days":30,"prev_price":null,"curr_price":89.0,"change_pct":null,"direction":"new"},{"competitor":"airalo","country":"North America","data":"Unlimited","days":40,"prev_price":null,"curr_price":99.0,"change_pct":null,"direction":"new"},{"competitor":"holafly","country":"Argentina","data":"Unlimited","days":14,"prev_price":null,"curr_price":48.9,"change_pct":null,"direction":"new"},{"competitor":"holafly","country":"Armenia","data":"Unlimited","days":14,"prev_price":null,"curr_price":60.9,"change_pct":null,"direction":"new"},{"competitor":"holafly","country":"Australia","data":"Unlimited","days":14,"prev_price":null,"curr_price":47.9,"change_pct":null,"direction":"new"},{"competitor":"holafly","country":"Aruba","data":"Unlimited","days":14,"prev_price":null,"curr_price":78.5,"change_pct":null,"direction":"new"},{"competitor":"holafly","country":"Asia","data":"Unlimited","days":14,"prev_price":null,"curr_price":47.9,"change_pct":null,"direction":"new"},{"competitor":"holafly","country":"Barbados","data":"Unlimited","days":7,"prev_price":null,"curr_price":36.9,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Andorra","data":"1GB","days":7,"prev_price":null,"curr_price":3.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Andorra","data":"3GB","days":30,"prev_price":null,"curr_price":9.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Andorra","data":"5GB","days":30,"prev_price":null,"curr_price":14.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Andorra","data":"10GB","days":30,"prev_price":null,"curr_price":23.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Andorra","data":"20GB","days":30,"prev_price":null,"curr_price":38.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Andorra","data":"Unlimited","days":5,"prev_price":null,"curr_price":18.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Andorra","data":"Unlimited","days":10,"prev_price":null,"curr_price":34.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Andorra","data":"Unlimited","days":15,"prev_price":null,"curr_price":48.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Andorra","data":"Unlimited","days":20,"prev_price":null,"curr_price":59.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Andorra","data":"Unlimited","days":25,"prev_price":null,"curr_price":65.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Andorra","data":"Unlimited","days":30,"prev_price":null,"curr_price":71.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Bahrain","data":"1GB","days":7,"prev_price":null,"curr_price":4.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Bahrain","data":"3GB","days":30,"prev_price":null,"curr_price":11.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Bahrain","data":"5GB","days":30,"prev_price":null,"curr_price":17.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Bahrain","data":"10GB","days":30,"prev_price":null,"curr_price":28.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Bahrain","data":"20GB","days":30,"prev_price":null,"curr_price":44.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Austria","data":"1GB","days":7,"prev_price":null,"curr_price":1.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Austria","data":"3GB","days":30,"prev_price":null,"curr_price":5.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Austria","data":"5GB","days":30,"prev_price":null,"curr_price":7.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Austria","data":"10GB","days":30,"prev_price":null,"curr_price":10.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Austria","data":"20GB","days":30,"prev_price":null,"curr_price":15.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Austria","data":"Unlimited","days":10,"prev_price":null,"curr_price":34.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Austria","data":"Unlimited","days":15,"prev_price":null,"curr_price":48.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Austria","data":"Unlimited","days":20,"prev_price":null,"curr_price":59.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Austria","data":"Unlimited","days":25,"prev_price":null,"curr_price":65.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Austria","data":"Unlimited","days":30,"prev_price":null,"curr_price":71.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Canada","data":"2GB","days":15,"prev_price":null,"curr_price":9.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Canada","data":"7GB","days":30,"prev_price":null,"curr_price":23.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Dominican Republic","data":"1GB","days":7,"prev_price":null,"curr_price":8.49,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Dominican Republic","data":"3GB","days":30,"prev_price":null,"curr_price":20.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Dominican Republic","data":"5GB","days":30,"prev_price":null,"curr_price":26.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Dominican Republic","data":"10GB","days":30,"prev_price":null,"curr_price":37.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Denmark","data":"1GB","days":7,"prev_price":null,"curr_price":3.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Denmark","data":"3GB","days":30,"prev_price":null,"curr_price":7.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Denmark","data":"5GB","days":30,"prev_price":null,"curr_price":10.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Denmark","data":"10GB","days":30,"prev_price":null,"curr_price":17.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Denmark","data":"20GB","days":30,"prev_price":null,"curr_price":27.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Denmark","data":"Unlimited","days":10,"prev_price":null,"curr_price":34.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Denmark","data":"Unlimited","days":15,"prev_price":null,"curr_price":48.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Denmark","data":"Unlimited","days":20,"prev_price":null,"curr_price":59.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Denmark","data":"Unlimited","days":25,"prev_price":null,"curr_price":65.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Denmark","data":"Unlimited","days":30,"prev_price":null,"curr_price":71.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Egypt","data":"1GB","days":7,"prev_price":null,"curr_price":8.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Egypt","data":"3GB","days":30,"prev_price":null,"curr_price":14.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Egypt","data":"5GB","days":30,"prev_price":null,"curr_price":19.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Egypt","data":"10GB","days":30,"prev_price":null,"curr_price":33.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Egypt","data":"20GB","days":30,"prev_price":null,"curr_price":42.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Egypt","data":"Unlimited","days":10,"prev_price":null,"curr_price":35.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Egypt","data":"Unlimited","days":15,"prev_price":null,"curr_price":48.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Egypt","data":"Unlimited","days":20,"prev_price":null,"curr_price":59.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Egypt","data":"Unlimited","days":25,"prev_price":null,"curr_price":74.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Egypt","data":"Unlimited","days":30,"prev_price":null,"curr_price":89.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Germany","data":"2GB","days":15,"prev_price":null,"curr_price":7.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Germany","data":"7GB","days":30,"prev_price":null,"curr_price":16.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Grenada","data":"1GB","days":7,"prev_price":null,"curr_price":7.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Grenada","data":"3GB","days":30,"prev_price":null,"curr_price":16.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Grenada","data":"5GB","days":30,"prev_price":null,"curr_price":22.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Grenada","data":"10GB","days":30,"prev_price":null,"curr_price":37.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Italy","data":"2GB","days":15,"prev_price":null,"curr_price":7.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Italy","data":"7GB","days":30,"prev_price":null,"curr_price":16.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Kuwait","data":"1GB","days":7,"prev_price":null,"curr_price":4.49,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Kuwait","data":"3GB","days":30,"prev_price":null,"curr_price":9.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Kuwait","data":"5GB","days":30,"prev_price":null,"curr_price":14.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Kuwait","data":"10GB","days":30,"prev_price":null,"curr_price":24.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Kuwait","data":"20GB","days":30,"prev_price":null,"curr_price":38.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Lithuania","data":"1GB","days":7,"prev_price":null,"curr_price":3.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Lithuania","data":"3GB","days":30,"prev_price":null,"curr_price":7.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Lithuania","data":"5GB","days":30,"prev_price":null,"curr_price":11.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Lithuania","data":"10GB","days":30,"prev_price":null,"curr_price":18.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Lithuania","data":"20GB","days":30,"prev_price":null,"curr_price":29.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Lithuania","data":"Unlimited","days":5,"prev_price":null,"curr_price":18.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Lithuania","data":"Unlimited","days":10,"prev_price":null,"curr_price":34.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Lithuania","data":"Unlimited","days":15,"prev_price":null,"curr_price":48.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Lithuania","data":"Unlimited","days":20,"prev_price":null,"curr_price":59.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Lithuania","data":"Unlimited","days":25,"prev_price":null,"curr_price":65.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Lithuania","data":"Unlimited","days":30,"prev_price":null,"curr_price":71.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Mexico","data":"2GB","days":15,"prev_price":null,"curr_price":8.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Mexico","data":"7GB","days":30,"prev_price":null,"curr_price":20.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"New Zealand","data":"2GB","days":15,"prev_price":null,"curr_price":7.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"New Zealand","data":"7GB","days":30,"prev_price":null,"curr_price":18.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Philippines","data":"2GB","days":15,"prev_price":null,"curr_price":7.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Philippines","data":"7GB","days":30,"prev_price":null,"curr_price":14.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"South Africa","data":"2GB","days":15,"prev_price":null,"curr_price":7.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"South Africa","data":"7GB","days":30,"prev_price":null,"curr_price":17.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Switzerland","data":"2GB","days":15,"prev_price":null,"curr_price":7.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Switzerland","data":"7GB","days":30,"prev_price":null,"curr_price":17.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Switzerland","data":"Unlimited","days":3,"prev_price":null,"curr_price":11.49,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Switzerland","data":"Unlimited","days":5,"prev_price":null,"curr_price":18.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"United Arab Emirates","data":"2GB","days":15,"prev_price":null,"curr_price":7.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"United Arab Emirates","data":"7GB","days":30,"prev_price":null,"curr_price":15.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Vietnam","data":"2GB","days":15,"prev_price":null,"curr_price":6.99,"change_pct":null,"direction":"new"},{"competitor":"saily","country":"Vietnam","data":"7GB","days":30,"prev_price":null,"curr_price":13.99,"change_pct":null,"direction":"new"}]};
 const DIFF_DATE="2026-05-31";
@@ -73,7 +72,6 @@ function App() {
   const [selCountry, setSelCountry] = useState(Object.keys(VOYE_DATA).sort()[0]);
   const [aiText, setAiText] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiKey, setAiKey] = useState(() => { try { return localStorage.getItem('anthropic_key')||''; } catch(e) { return ''; } });
   const [voyeState, setVoyeState] = useState(() => {
     try { return JSON.parse(localStorage.getItem('voye_state')||'null') || VOYE_DATA; } catch(e) { return VOYE_DATA; }
   });
@@ -85,16 +83,11 @@ function App() {
   const [saveStatus, setSaveStatus] = useState('');
   const [reportType, setReportType] = useState('comp');
   const [compFilter, setCompFilter] = useState('all');
-  const [reportError, setReportError] = useState('');
   const [dateFrom, setDateFrom] = useState(DIFF_DATE);
   const [dateTo, setDateTo] = useState(DIFF_DATE);
   const [previewRows, setPreviewRows] = useState([]);
   const [previewHeaders, setPreviewHeaders] = useState([]);
   const [previewTotal, setPreviewTotal] = useState(0);
-  const [previewFilter, setPreviewFilter] = useState('all');
-  const [previewExpanded, setPreviewExpanded] = useState(false);
-  const [t25Size, setT25Size] = useState(['5GB']);
-  const [t25Days, setT25Days] = useState(['7']);
 
   const filteredChanges = useMemo(() => {
     let list = ALL_CHANGES;
@@ -106,91 +99,21 @@ function App() {
 
   const goCompare = useCallback((country) => { setSelCountry(country); setTab('compare'); }, []);
 
-  const top25Available = useMemo(() => {
-    const sizes = new Set(), days = new Set();
-    TOP25_DATA.forEach(country => {
-      (VOYE_DATA[country]||[]).forEach(p => { if(p.data) sizes.add(p.data); if(p.days) days.add(p.days); });
-      COMPETITORS.forEach(c => { ((COMP_DATA[c]||{})[country]||[]).forEach(p => { if(p.data) sizes.add(p.data); if(p.days) days.add(p.days); }); });
-    });
-    const sortedSizes = [...sizes].sort((a,b) => { if(a==='Unlimited') return -1; if(b==='Unlimited') return 1; return parseFloat(a)-parseFloat(b); });
-    return { sizes: sortedSizes, days: [...days].sort((a,b)=>a-b) };
-  }, []);
-
-  const top25Rows = useMemo(() => {
-    const avg = (plans, isVoye=false) => {
-      const filtered = plans.filter(p => {
-        const price = isVoye ? (p.new_price||p.price) : p.price;
-        if (!price) return false;
-        const sOk = t25Size.includes(p.data);
-        const dOk = t25Days.includes(String(p.days));
-        return sOk && dOk;
-      });
-      if (!filtered.length) return null;
-      const prices = filtered.map(p => isVoye ? (p.new_price||p.price) : p.price);
-      return Math.round(prices.reduce((a,b)=>a+b,0)/prices.length*100)/100;
-    };
-    return TOP25_DATA.map(country => {
-      const voye = avg(VOYE_DATA[country]||[], true);
-      const comp = {};
-      COMPETITORS.forEach(c => { comp[c] = avg((COMP_DATA[c]||{})[country]||[]); });
-      const allVals = [voye,...Object.values(comp)].filter(v=>v!=null);
-      let status = 'neutral';
-      if (voye!=null && allVals.length>1) {
-        const mn=Math.min(...allVals), mx=Math.max(...allVals);
-        status = voye<=mn?'green':voye>=mx?'red':'yellow';
-      }
-      return {country, voye, comp, status};
-    });
-  }, [t25Size, t25Days]);
-
-  const toggleT25 = useCallback((val, setter) => { setter([val]); }, []);
-
-  const top25CSI = useMemo(() => {
-    return TOP25_DATA.slice(0, 10).map(country => {
-      const vPlans = (VOYE_DATA[country]||[]);
-      let nCheap=0, nMid=0, nPricey=0;
-      vPlans.forEach(vp => {
-        const vPrice = vp.new_price||vp.price;
-        if (!vPrice) return;
-        const compPrices = COMPETITORS.map(c => {
-          const match = ((COMP_DATA[c]||{})[country]||[]).find(cp => cp.data===vp.data && cp.days===vp.days);
-          return match ? match.price : null;
-        }).filter(p => p!==null);
-        if (!compPrices.length) return;
-        const allP = [vPrice,...compPrices];
-        const mn=Math.min(...allP), mx=Math.max(...allP);
-        if (vPrice<=mn) nCheap++;
-        else if (vPrice>=mx) nPricey++;
-        else nMid++;
-      });
-      const total = nCheap+nMid+nPricey;
-      return {country, cheap:total?Math.round(nCheap/total*100):0, mid:total?Math.round(nMid/total*100):0, pricey:total?Math.round(nPricey/total*100):0, total};
-    });
-  }, []);
-
   const runAI = useCallback(async () => {
-    if (!aiKey.trim()) { setAiText('⚠ Enter your Anthropic API key above first.'); return; }
     setAiLoading(true); setAiText('');
     const top = ALL_CHANGES.slice(0,10).map(c => c.country+' '+c.data+' '+c.days+'d: $'+c.old+'→$'+c.new+' ('+(c.pct>0?'+':'')+c.pct+'%)').join('\n');
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'x-api-key': aiKey.trim(),
-          'anthropic-version':'2023-06-01',
-          'anthropic-dangerous-direct-browser-access':'true',
-        },
-        body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1000,
-          messages:[{role:'user',content:'You are a pricing strategist for Voye Global, an eSIM provider.\n\nPricing update ('+UPDATE_DATE+'):\n- '+N_CHANGES+' price changes across '+N_COUNTRIES+' destinations\n- '+N_UP+' increases, '+N_DN+' decreases\n\nBiggest changes:\n'+(top||'(no recent changes)')+' \n\nGive 5 sharp actionable strategic insights. English bullet points.'}]
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000,
+          messages:[{role:'user',content:'You are a pricing strategist for Voye Global, an eSIM provider.\n\nPricing update ('+UPDATE_DATE+'):\n- '+N_CHANGES+' price changes across '+N_COUNTRIES+' destinations\n- '+N_UP+' increases, '+N_DN+' decreases\n\nBiggest changes:\n'+top+'\n\nGive 5 sharp actionable strategic insights. English bullet points.'}]
         })
       });
       const data = await res.json();
-      if (data.error) { setAiText('API error: '+data.error.message); }
-      else { setAiText(data.content?.filter(b=>b.type==='text').map(b=>b.text).join('') || 'No response'); }
-    } catch(e) { setAiText('Error: '+e.message); }
+      setAiText(data.content?.filter(b=>b.type==='text').map(b=>b.text).join('') || 'No response');
+    } catch(e) { setAiText('Error — try again.'); }
     setAiLoading(false);
-  }, [aiKey]);
+  }, []);
 
   const handleUpload = useCallback(async (e) => {
     const file = e.target.files[0];
@@ -242,124 +165,59 @@ function App() {
       const headers = ['Destination','Package','Days','Competitor','Old Price','New Price','Change %','Direction'];
       const rows = (DIFF_DATA.changes||[])
         .filter(c => filter === 'all' || c.competitor === filter)
-        .map(c => [c.country, c.data||'—', c.days+'d', c.competitor.charAt(0).toUpperCase()+c.competitor.slice(1), '$'+c.prev_price?.toFixed(2) ?? "N/A", '$'+c.curr_price?.toFixed(2) ?? "N/A", (c.change_pct>0?'+':'')+c.change_pct+'%', c.direction==='up'?'▲ Up':'▼ Down']);
+        .map(c => [c.country, c.data||'—', c.days+'d', c.competitor.charAt(0).toUpperCase()+c.competitor.slice(1), '$'+c.prev_price.toFixed(2), '$'+c.curr_price.toFixed(2), (c.change_pct>0?'+':'')+c.change_pct+'%', c.direction==='up'?'▲ Up':'▼ Down']);
       const rawRows = (DIFF_DATA.changes||[])
         .filter(c => filter === 'all' || c.competitor === filter)
         .map(c => [c.country, c.data||'—', c.days, c.competitor.charAt(0).toUpperCase()+c.competitor.slice(1), c.prev_price, c.curr_price, c.change_pct/100, c.direction==='up'?'Up':'Down']);
       return {headers, rows, rawRows};
-    } else if (type === 'voye') {
-      const headers = ['Destination','Package','Days','Current Price','Date'];
-      const rows = [], rawRows = [];
-      Object.entries(VOYE_DATA).forEach(([country, plans]) => {
-        plans.forEach(p => {
-          const price = p.new_price||p.price;
-          if (!price) return;
-          rows.push([country, p.data||'—', (p.days||'?')+'d', '$'+price?.toFixed(2) ?? "N/A", UPDATE_DATE]);
-          rawRows.push([country, p.data||'—', p.days, price, UPDATE_DATE]);
-        });
-      });
-      return {headers, rows, rawRows};
     } else {
-      // ── Pricing Recommendations ──
-      const headers = ['Destination','Package','Days','Voye Price','Cheapest Comp','Cheapest Price','% Diff','Recommendation','Suggested Price'];
+      const headers = ['Destination','Package','Days','Old Price','New Price','Change $','Change %','Date'];
       const rows = [], rawRows = [];
-      const recentChanges = new Set((DIFF_DATA.changes||[]).map(c => c.country+'|'+(c.data||'')+'|'+c.days));
       Object.entries(VOYE_DATA).forEach(([country, plans]) => {
-        plans.forEach(p => {
-          const vPrice = p.new_price||p.price;
-          if (!vPrice) return;
-          let cheapestComp = null, cheapestPrice = null;
-          COMPETITORS.forEach(comp => {
-            const match = ((COMP_DATA[comp]||{})[country]||[]).find(cp => cp.data===p.data && cp.days===p.days);
-            if (match && match.price > 0 && (cheapestPrice===null || match.price < cheapestPrice)) {
-              cheapestPrice = match.price; cheapestComp = comp;
-            }
-          });
-          if (cheapestPrice === null) return;
-          const diffPct = Math.round((vPrice - cheapestPrice) / cheapestPrice * 100);
-          const hasRecentChange = recentChanges.has(country+'|'+(p.data||'')+'|'+p.days);
-          let rec, suggested;
-          if (diffPct > 15 && hasRecentChange) {
-            rec = 'Urgent Review'; suggested = Math.round(cheapestPrice * 0.95 * 100) / 100;
-          } else if (diffPct > 15) {
-            rec = 'Reduce'; suggested = Math.round(cheapestPrice * 0.95 * 100) / 100;
-          } else if (diffPct < -30) {
-            rec = 'Increase'; suggested = Math.round((vPrice + cheapestPrice) / 2 * 100) / 100;
-          } else {
-            rec = 'OK'; suggested = vPrice;
-          }
-          const compName = cheapestComp ? cheapestComp.charAt(0).toUpperCase()+cheapestComp.slice(1) : '—';
-          const diffStr = (diffPct>0?'+':'')+diffPct+'%';
-          rows.push([country, p.data||'—', (p.days||'?')+'d', '$'+vPrice?.toFixed(2) ?? "N/A", compName, '$'+cheapestPrice?.toFixed(2) ?? "N/A", diffStr, rec, '$'+suggested?.toFixed(2) ?? "N/A"]);
-          rawRows.push([country, p.data||'—', p.days, vPrice, compName, cheapestPrice, diffPct/100, rec, suggested]);
+        plans.filter(p => p.changed && p.price && p.new_price).forEach(p => {
+          const pct = Math.round((p.new_price - p.price) / p.price * 100);
+          const diff = (p.new_price - p.price).toFixed(2);
+          rows.push([country, p.data||'—', (p.days||'?')+'d', '$'+p.price.toFixed(2), '$'+p.new_price.toFixed(2), (p.new_price>p.price?'+':'')+diff, (pct>0?'+':'')+pct+'%', UPDATE_DATE]);
+          rawRows.push([country, p.data||'—', p.days, p.price, p.new_price, p.new_price-p.price, (p.new_price-p.price)/p.price, UPDATE_DATE]);
         });
       });
-      const order = {'Urgent Review':0,'Reduce':1,'Increase':2,'OK':3};
-      rows.sort((a,b) => (order[a[7]]??3)-(order[b[7]]??3));
-      rawRows.sort((a,b) => (order[a[7]]??3)-(order[b[7]]??3));
       return {headers, rows, rawRows};
     }
   }, []);
 
   const generatePreview = useCallback(() => {
-    setReportError('');
-    const {headers, rows} = buildReportRows(reportType, compFilter, dateFrom, dateTo);
+    const {headers, rows} = buildReportRows(reportType, compFilter);
     setPreviewHeaders(headers);
-    setPreviewRows(rows);
+    setPreviewRows(rows.slice(0,10));
     setPreviewTotal(rows.length);
-    setPreviewFilter('all');
-    setPreviewExpanded(false);
   }, [reportType, compFilter, buildReportRows]);
 
   const downloadReport = useCallback(() => {
-    setReportError('');
-    try {
-      const {headers, rawRows} = buildReportRows(reportType, compFilter);
-      const applyFormats = (ws, rws, numCols, pctCols) => {
-        ws['!cols'] = headers.map((_,i) => ({wch:i===0?22:i===7?15:13}));
-        rws.forEach((_,ri) => {
-          numCols.forEach(ci => {
-            const cell = ws[XLSX.utils.encode_cell({r:ri+1,c:ci})];
-            if (cell && typeof cell.v==='number') cell.z='$#,##0.00';
-          });
-          pctCols.forEach(ci => {
-            const cell = ws[XLSX.utils.encode_cell({r:ri+1,c:ci})];
-            if (cell && typeof cell.v==='number') cell.z='0.0%';
-          });
-        });
-      };
-      const wb = XLSX.utils.book_new();
-      if (reportType === 'comp') {
-        const ws = XLSX.utils.aoa_to_sheet([headers, ...rawRows]);
-        applyFormats(ws, rawRows, [4,5], [6]);
-        XLSX.utils.book_append_sheet(wb, ws, 'Competitor Changes');
-      } else if (reportType === 'voye') {
-        const ws = XLSX.utils.aoa_to_sheet([headers, ...rawRows]);
-        applyFormats(ws, rawRows, [3], []);
-        XLSX.utils.book_append_sheet(wb, ws, 'Voye Pricing');
-      } else {
-        // Reco report: one sheet per category + All
-        const cats = ['Urgent Review','Reduce','Increase','OK'];
-        cats.forEach(cat => {
-          const sub = rawRows.filter(r => r[7]===cat);
-          if (!sub.length) return;
-          const ws = XLSX.utils.aoa_to_sheet([headers, ...sub]);
-          applyFormats(ws, sub, [3,5,8], [6]);
-          XLSX.utils.book_append_sheet(wb, ws, cat);
-        });
-        const wsAll = XLSX.utils.aoa_to_sheet([headers, ...rawRows]);
-        applyFormats(wsAll, rawRows, [3,5,8], [6]);
-        XLSX.utils.book_append_sheet(wb, wsAll, 'All Plans');
-      }
-      const part = reportType==='comp'
-        ? (compFilter==='all'?'All_Competitors':compFilter.charAt(0).toUpperCase()+compFilter.slice(1))
-        : reportType==='voye' ? 'Voye_Pricing' : 'Pricing_Recommendations';
-      const d1 = (dateFrom||'').replace(/-/g,'') || 'latest';
-      const d2 = dateTo && dateTo!==dateFrom ? '_to_'+(dateTo||'').replace(/-/g,'') : '';
-      XLSX.writeFile(wb, part+'_'+d1+d2+'.xlsx');
-    } catch(e) {
-      setReportError('Download failed: '+e.message);
+    const {headers, rawRows} = buildReportRows(reportType, compFilter);
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rawRows]);
+    ws['!cols'] = headers.map((_,i) => ({wch:i===0?22:13}));
+    if (reportType === 'comp') {
+      const numCols = [4,5,6];
+      rawRows.forEach((_,ri) => numCols.forEach(ci => {
+        const addr = XLSX.utils.encode_cell({r:ri+1,c:ci});
+        const cell = ws[addr];
+        if (cell && typeof cell.v === 'number') cell.z = ci===6?'0.0%':'$#,##0.00';
+      }));
+    } else {
+      rawRows.forEach((_,ri) => [3,4,5,6].forEach(ci => {
+        const addr = XLSX.utils.encode_cell({r:ri+1,c:ci});
+        const cell = ws[addr];
+        if (cell && typeof cell.v === 'number') cell.z = ci===6?'0.0%':'$#,##0.00';
+      }));
     }
+    XLSX.utils.book_append_sheet(wb, ws, 'Report');
+    const part = reportType==='comp'
+      ? (compFilter==='all'?'All_Competitors':compFilter.charAt(0).toUpperCase()+compFilter.slice(1))
+      : 'Voye';
+    const d1 = dateFrom.replace(/-/g,'');
+    const d2 = dateTo && dateTo!==dateFrom ? '_to_'+dateTo.replace(/-/g,'') : '';
+    XLSX.writeFile(wb, part+'_Price_Changes_'+d1+d2+'.xlsx');
   }, [reportType, compFilter, dateFrom, dateTo, buildReportRows]);
 
   const tabLabels = {overview:'Overview',changes:'Price Changes',compare:'vs Competitors',reports:'Reports',ai:'AI Analysis'};
@@ -465,128 +323,6 @@ function App() {
                   <span style={{background:k.tbg,color:k.tc,padding:'3px 10px',borderRadius:20,fontSize:11,fontWeight:600}}>{k.trend}</span>
                 </div>
               ))}
-            </div>
-
-            {/* Top 25 Tourist Destinations */}
-            <div className="card" style={{padding:20,marginBottom:20}}>
-              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:4}}>
-                <div style={{width:30,height:30,borderRadius:8,background:'#EDE9FE',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>🌍</div>
-                <div style={{fontSize:14,fontWeight:700,color:'#1A1D2E'}}>Top 25 Tourist Destinations — Competitive Pricing</div>
-              </div>
-              <div style={{fontSize:12,color:'#94A3B8',marginBottom:14}}>
-                Showing avg price for <strong style={{color:'#6366F1'}}>{''+t25Size.join(', ')+' · '+t25Days.map(d=>d+'d').join(', ')}</strong>
-                &nbsp;·&nbsp; Green = Voye cheapest · Yellow = middle · Red = most expensive
-              </div>
-
-              {/* Filter bar */}
-              <div style={{marginBottom:14}}>
-                <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap',marginBottom:8}}>
-                  <span style={{fontSize:11,fontWeight:600,color:'#64748B',minWidth:56}}>PACKAGE</span>
-                  {top25Available.sizes.map(s => (
-                    <button key={s}
-                      onClick={() => toggleT25(s, setT25Size)}
-                      style={{padding:'3px 11px',borderRadius:20,border:'1px solid '+(t25Size.includes(s)?'#6366F1':'#E2E8F0'),background:t25Size.includes(s)?'#6366F1':'#F8F9FC',color:t25Size.includes(s)?'#fff':'#64748B',fontSize:11,fontWeight:600,cursor:'pointer'}}
-                    >{s}</button>
-                  ))}
-                </div>
-                <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
-                  <span style={{fontSize:11,fontWeight:600,color:'#64748B',minWidth:56}}>DAYS</span>
-                  {top25Available.days.map(d => (
-                    <button key={d}
-                      onClick={() => toggleT25(String(d), setT25Days)}
-                      style={{padding:'3px 11px',borderRadius:20,border:'1px solid '+(t25Days.includes(String(d))?'#6366F1':'#E2E8F0'),background:t25Days.includes(String(d))?'#6366F1':'#F8F9FC',color:t25Days.includes(String(d))?'#fff':'#64748B',fontSize:11,fontWeight:600,cursor:'pointer'}}
-                    >{d}d</button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Two-panel layout */}
-              <div style={{display:'flex',gap:20,alignItems:'flex-start'}}>
-
-                {/* Left 60%: pricing table */}
-                <div style={{flex:'0 0 60%',minWidth:0,overflowX:'auto'}}>
-                  <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
-                    <thead>
-                      <tr style={{background:'#F8F9FC',borderBottom:'2px solid #E8EBF0'}}>
-                        <th style={{padding:'8px 8px',textAlign:'left',color:'#64748B',fontWeight:600,letterSpacing:'.4px',textTransform:'uppercase',whiteSpace:'nowrap'}}>Destination</th>
-                        <th style={{padding:'8px 8px',textAlign:'right',color:'#6366F1',fontWeight:700,letterSpacing:'.4px',textTransform:'uppercase'}}>Voye</th>
-                        {COMPETITORS.map(c => (
-                          <th key={c} style={{padding:'8px 8px',textAlign:'right',color:COMP_COLORS[c]||'#64748B',fontWeight:600,letterSpacing:'.4px',textTransform:'uppercase'}}>{c.charAt(0).toUpperCase()+c.slice(1)}</th>
-                        ))}
-                        <th style={{padding:'8px 8px',textAlign:'center',color:'#64748B',fontWeight:600,letterSpacing:'.4px',textTransform:'uppercase'}}>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {top25Rows.map((row, i) => {
-                        const statusBg = row.status==='green'?'#F0FDF4':row.status==='red'?'#FFF5F5':row.status==='yellow'?'#FFFBEB':'#F8F9FC';
-                        const statusDot = row.status==='green'?'#10B981':row.status==='red'?'#EF4444':row.status==='yellow'?'#F59E0B':'#CBD5E1';
-                        const statusLabel = row.status==='green'?'Cheapest':row.status==='red'?'Priciest':row.status==='yellow'?'Middle':'—';
-                        const allPrices = [row.voye,...COMPETITORS.map(c=>row.comp[c])].filter(v=>v!=null);
-                        const minPrice = allPrices.length ? Math.min(...allPrices) : null;
-                        return (
-                          <tr key={i} style={{background:i%2===0?'#FFFFFF':statusBg,borderBottom:'1px solid #F1F5F9'}}>
-                            <td style={{padding:'7px 8px',fontWeight:600,color:'#1A1D2E',whiteSpace:'nowrap'}}>
-                              <span style={{display:'inline-block',width:16,color:'#94A3B8',fontSize:11,fontWeight:400}}>{i+1}</span>
-                              {row.country}
-                            </td>
-                            <td style={{padding:'7px 8px',textAlign:'right',fontFamily:"'Roboto Mono',monospace",fontWeight:700,color:row.voye!=null&&row.voye===minPrice?'#059669':'#6366F1'}}>
-                              {row.voye!=null ? '$'+row.voye?.toFixed(2) ?? "N/A" : '—'}
-                            </td>
-                            {COMPETITORS.map(c => {
-                              const v = row.comp[c];
-                              return (
-                                <td key={c} style={{padding:'7px 8px',textAlign:'right',fontFamily:"'Roboto Mono',monospace",color:v!=null&&v===minPrice?'#DC2626':'#64748B'}}>
-                                  {v!=null ? '$'+v?.toFixed(2) ?? "N/A" : <span style={{color:'#E2E8F0'}}>—</span>}
-                                </td>
-                              );
-                            })}
-                            <td style={{padding:'7px 8px',textAlign:'center'}}>
-                              <span style={{display:'inline-flex',alignItems:'center',gap:4,background:statusBg,border:'1px solid '+statusDot+'33',borderRadius:20,padding:'2px 8px'}}>
-                                <span style={{width:6,height:6,borderRadius:'50%',background:statusDot,display:'inline-block'}}/>
-                                <span style={{fontSize:10,fontWeight:600,color:statusDot}}>{statusLabel}</span>
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Right 40%: Competitive Strength Index */}
-                <div style={{flex:'0 0 38%',minWidth:0,borderLeft:'1px solid #F1F5F9',paddingLeft:20}}>
-                  <div style={{fontSize:13,fontWeight:700,color:'#1A1D2E',marginBottom:4}}>Competitive Strength Index</div>
-                  <div style={{fontSize:11,color:'#94A3B8',marginBottom:14}}>Top 10 destinations — % of all packages where Voye is cheapest / middle / priciest</div>
-                  {top25CSI.map((row,i) => (
-                    <div key={i} style={{marginBottom:12}}>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:4}}>
-                        <span style={{fontSize:12,fontWeight:600,color:'#1A1D2E'}}>{row.country}</span>
-                        <span style={{fontSize:10,color:'#94A3B8'}}>{row.total} pkgs</span>
-                      </div>
-                      <div style={{display:'flex',height:18,borderRadius:6,overflow:'hidden',background:'#F1F5F9'}}>
-                        {row.cheap>0 && <div style={{flex:row.cheap,background:'#10B981',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                          {row.cheap>=12 && <span style={{fontSize:9,color:'#fff',fontWeight:700}}>{row.cheap}%</span>}
-                        </div>}
-                        {row.mid>0 && <div style={{flex:row.mid,background:'#F59E0B',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                          {row.mid>=12 && <span style={{fontSize:9,color:'#fff',fontWeight:700}}>{row.mid}%</span>}
-                        </div>}
-                        {row.pricey>0 && <div style={{flex:row.pricey,background:'#EF4444',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                          {row.pricey>=12 && <span style={{fontSize:9,color:'#fff',fontWeight:700}}>{row.pricey}%</span>}
-                        </div>}
-                        {row.total===0 && <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                          <span style={{fontSize:10,color:'#CBD5E1'}}>no data</span>
-                        </div>}
-                      </div>
-                    </div>
-                  ))}
-                  <div style={{display:'flex',gap:14,marginTop:10}}>
-                    <span style={{fontSize:10,color:'#10B981',fontWeight:600}}>● Cheapest</span>
-                    <span style={{fontSize:10,color:'#F59E0B',fontWeight:600}}>● Middle</span>
-                    <span style={{fontSize:10,color:'#EF4444',fontWeight:600}}>● Priciest</span>
-                  </div>
-                </div>
-
-              </div>
             </div>
 
             {/* Advantage + Weak Markets */}
@@ -698,15 +434,7 @@ function App() {
                   <div style={{width:30,height:30,borderRadius:8,background:'#FEF3C7',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>🕐</div>
                   <div style={{fontSize:14,fontWeight:700,color:'#1A1D2E'}}>Last Price Update</div>
                 </div>
-                <div style={{fontSize:12,color:'#94A3B8',marginBottom:16}}>{UPDATE_DATE} · destinations with most plan changes · {(DIFF_DATA.changes||[]).filter(c=>Math.abs(c.change_pct)>=10).length} significant changes</div>
-              <div style={{marginTop:12}}>
-                {{(DIFF_DATA.changes||[]).filter(c=>Math.abs(c.change_pct)>=10).sort((a,b)=>Math.abs(b.change_pct)-Math.abs(a.change_pct)).map((c,i)=>
-                  <div key={{i}} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid #F5F5F5',fontSize:13}}>
-                    <span>{{c.country}} {{c.data}} {{c.days}}d ({{c.competitor}})</span>
-                    <span style={{color:c.change_pct>0?'#EF4444':'#10B981',fontWeight:600}}>{{c.change_pct>0?'+':''}}{{c.change_pct?.toFixed(1)}}%</span>
-                  </div>
-                )}}
-              </div>
+                <div style={{fontSize:12,color:'#94A3B8',marginBottom:16}}>{UPDATE_DATE} · destinations with most plan changes</div>
                 {RECENT_UPDATES.map((m,i) => (
                   <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 0',borderBottom:'1px solid #F1F5F9'}}>
                     <span style={{fontSize:13,fontWeight:600,color:'#1A1D2E'}}>{m.country}</span>
@@ -726,7 +454,7 @@ function App() {
                       <div style={{fontSize:11,color:'#94A3B8'}}>{c.data} · {c.days||'?'}d</div>
                     </div>
                     <div style={{textAlign:'right'}}>
-                      <div style={{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:'#64748B',marginBottom:3}}>${c.old?.toFixed(2) ?? "N/A"} → <span style={{color:c.pct>0?'#EF4444':'#10B981',fontWeight:700}}>${c.new?.toFixed(2) ?? "N/A"}</span></div>
+                      <div style={{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:'#64748B',marginBottom:3}}>${c.old.toFixed(2)} → <span style={{color:c.pct>0?'#EF4444':'#10B981',fontWeight:700}}>${c.new.toFixed(2)}</span></div>
                       <Pill cls={c.pct>0?'dn':'up'} text={(c.pct>0?'+':'')+c.pct+'%'} />
                     </div>
                   </div>
@@ -809,8 +537,8 @@ function App() {
                       <td style={{padding:'11px 16px',fontWeight:600,fontSize:13,color:'#1A1D2E'}}>{c.country}</td>
                       <td style={{padding:'11px 16px',fontSize:13,color:'#64748B'}}>{c.data||'—'}</td>
                       <td style={{padding:'11px 16px',fontSize:13,color:'#94A3B8'}}>{c.days||'—'}d</td>
-                      <td style={{padding:'11px 16px',textAlign:'right'}}><span style={{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:'#94A3B8'}}>${c.old?.toFixed(2) ?? "N/A"}</span></td>
-                      <td style={{padding:'11px 16px',textAlign:'right'}}><span style={{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:c.pct>0?'#10B981':'#EF4444',fontWeight:700}}>${c.new?.toFixed(2) ?? "N/A"}</span></td>
+                      <td style={{padding:'11px 16px',textAlign:'right'}}><span style={{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:'#94A3B8'}}>${c.old.toFixed(2)}</span></td>
+                      <td style={{padding:'11px 16px',textAlign:'right'}}><span style={{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:c.pct>0?'#10B981':'#EF4444',fontWeight:700}}>${c.new.toFixed(2)}</span></td>
                       <td style={{padding:'11px 16px',textAlign:'right'}}><Pill cls={c.pct>0?'up':'dn'} text={(c.pct>0?'+':'')+c.pct+'%'} /></td>
                     </tr>
                   ))}
@@ -853,32 +581,13 @@ function App() {
                     const vKey = 'voye|'+selCountry+'|'+(p.data||'')+'|'+p.days;
                     const baseVoyeP = p.new_price || p.price;
                     const voyeP = manualEdits[vKey] !== undefined ? (parseFloat(manualEdits[vKey])||baseVoyeP) : baseVoyeP;
-                    const _isUnl = (s) => (s||'').toLowerCase() === 'unlimited';
-                    const _findMatch = (cplans, pd, pdays) => {
-                      const exact = cplans.find(cp => cp.data === pd && cp.days === pdays);
-                      if (exact) return exact;
-                      if (_isUnl(pd)) return null;
-                      return cplans.find(cp => cp.data === pd) || null;
-                    };
-                    const _estimatePrice = (cplans, pd) => {
-                      if (!pd || _isUnl(pd)) return null;
-                      const gbNum = parseFloat(pd);
-                      if (isNaN(gbNum) || gbNum <= 0) return null;
-                      const capped = cplans.filter(cp => cp.data && !_isUnl(cp.data) && parseFloat(cp.data) > 0 && cp.price > 0);
-                      if (!capped.length) return null;
-                      const avgPerGB = capped.reduce((s,cp) => s + cp.price/parseFloat(cp.data), 0) / capped.length;
-                      return Math.round(avgPerGB * gbNum * 100) / 100;
-                    };
-                    const compPricesRaw = COMPETITORS.map((comp,j) => {
+                    const compPrices = COMPETITORS.map((comp,j) => {
                       const cKey = 'comp|'+comp+'|'+selCountry+'|'+(p.data||'')+'|'+p.days;
                       const cplans = (COMP_DATA[comp]||{})[selCountry] || [];
-                      if (manualEdits[cKey] !== undefined) return {price: parseFloat(manualEdits[cKey])||null, isEst:false, isEdited:true};
-                      const match = _findMatch(cplans, p.data, p.days);
-                      if (match) return {price: match.price, isEst:false, isEdited:false};
-                      const est = _estimatePrice(cplans, p.data);
-                      return {price: est, isEst: est !== null, isEdited:false};
+                      const match = cplans.find(cp => cp.data === p.data) || cplans.find(cp => cp.days === p.days);
+                      const baseP = match ? match.price : null;
+                      return manualEdits[cKey] !== undefined ? (parseFloat(manualEdits[cKey])||baseP) : baseP;
                     });
-                    const compPrices = compPricesRaw.map(r => r.price);
                     const validPrices = compPrices.filter(x => x !== null && x > 0);
                     const avgComp = validPrices.length ? validPrices.reduce((a,b)=>a+b,0)/validPrices.length : null;
                     const posPct = avgComp && voyeP ? Math.round((voyeP - avgComp) / avgComp * 100) : null;
@@ -889,22 +598,18 @@ function App() {
                         <td style={{padding:'11px 16px',textAlign:'right'}}>
                           {editMode
                             ? <input type="number" step="0.01" style={{width:72,background:manualEdits[vKey]!==undefined?'#FFFBEB':'#F8F9FC',border:'1px solid '+(manualEdits[vKey]!==undefined?'#F59E0B':'#E2E8F0'),borderRadius:6,color:'#1A1D2E',padding:'4px 7px',fontSize:12,textAlign:'right',fontFamily:"'Roboto Mono',monospace",outline:'none'}} value={manualEdits[vKey]!==undefined ? manualEdits[vKey] : (baseVoyeP||'').toString()} onChange={e => setManualEdits(prev => ({...prev, [vKey]: e.target.value}))} />
-                            : <span style={{fontFamily:"'Roboto Mono',monospace",fontSize:13,color:manualEdits[vKey]!==undefined?'#D97706':'#6366F1',fontWeight:700}}>${voyeP!=null?voyeP?.toFixed(2) ?? "N/A":'—'}</span>
+                            : <span style={{fontFamily:"'Roboto Mono',monospace",fontSize:13,color:manualEdits[vKey]!==undefined?'#D97706':'#6366F1',fontWeight:700}}>${voyeP!=null?voyeP.toFixed(2):'—'}</span>
                           }
                         </td>
                         {COMPETITORS.map((comp,j) => {
                           const cKey = 'comp|'+comp+'|'+selCountry+'|'+(p.data||'')+'|'+p.days;
                           const cplans = (COMP_DATA[comp]||{})[selCountry] || [];
-                          const raw = compPricesRaw[j];
-                          const cp = raw ? raw.price : null;
-                          const isEst = raw ? raw.isEst : false;
-                          const isEdited = raw ? raw.isEdited : false;
-                          const exactMatch = _findMatch(cplans, p.data, p.days);
-                          const baseCompP = exactMatch ? exactMatch.price : null;
+                          const match = cplans.find(cp => cp.data === p.data) || cplans.find(cp => cp.days === p.days);
+                          const baseCompP = match ? match.price : null;
+                          const cp = compPrices[j];
+                          const isEdited = manualEdits[cKey] !== undefined;
                           const cheaper = cp!=null && voyeP!=null && cp < voyeP;
                           const pricier = cp!=null && voyeP!=null && cp > voyeP;
-                          const priceColor = isEdited?'#D97706':(cheaper?'#EF4444':pricier?'#10B981':'#94A3B8');
-                          const estTitle = 'Estimated: no exact '+comp+' match for '+(p.data||'?')+' — calculated from their avg cost-per-GB across '+(cplans.filter(c=>c.data&&!_isUnl(c.data)).length)+' plans in this country';
                           return (
                             <td key={j} style={{padding:'11px 16px',textAlign:'right'}}>
                               {editMode
@@ -912,10 +617,7 @@ function App() {
                                   ? <input type="number" step="0.01" style={{width:72,background:isEdited?'#FFFBEB':'#F8F9FC',border:'1px solid '+(isEdited?'#F59E0B':'#E2E8F0'),borderRadius:6,color:isEdited?'#D97706':(cheaper?'#EF4444':pricier?'#10B981':'#64748B'),padding:'4px 7px',fontSize:12,textAlign:'right',fontFamily:"'Roboto Mono',monospace",outline:'none'}} value={isEdited ? manualEdits[cKey] : (baseCompP||'').toString()} onChange={e => setManualEdits(prev => ({...prev, [cKey]: e.target.value}))} />
                                   : <span style={{color:'#CBD5E1',fontSize:11}}>—</span>
                                 : cp !== null
-                                  ? <span
-                                      style={{fontFamily:"'Roboto Mono',monospace",fontSize:isEst?11:13,fontStyle:isEst?'italic':'normal',color:priceColor,opacity:isEst?0.8:1,cursor:isEst?'help':'default'}}
-                                      title={isEst ? estTitle : undefined}
-                                    >{isEst?'~':''}${cp?.toFixed(2) ?? "N/A"}</span>
+                                  ? <span style={{fontFamily:"'Roboto Mono',monospace",fontSize:13,color:isEdited?'#D97706':(cheaper?'#EF4444':pricier?'#10B981':'#94A3B8')}}>${cp.toFixed(2)}</span>
                                   : <span style={{color:'#CBD5E1',fontSize:11}}>—</span>
                               }
                             </td>
@@ -933,7 +635,6 @@ function App() {
             <div style={{marginTop:10,fontSize:11,color:'#94A3B8',display:'flex',gap:20,flexWrap:'wrap'}}>
               <span><span style={{fontFamily:"'Roboto Mono',monospace",color:'#EF4444'}}>$X.XX</span> = competitor cheaper than Voye</span>
               <span><span style={{fontFamily:"'Roboto Mono',monospace",color:'#10B981'}}>$X.XX</span> = competitor more expensive</span>
-              <span><span style={{fontFamily:"'Roboto Mono',monospace",fontStyle:'italic',color:'#94A3B8'}}><em>~$X.XX</em></span> = estimated (no exact plan — hover for details)</span>
               <span>% = Voye vs market average</span>
               {Object.keys(manualEdits).length > 0 && <span><span style={{fontFamily:"'Roboto Mono',monospace",color:'#D97706'}}>$X.XX</span> = edited ({Object.keys(manualEdits).length} unsaved)</span>}
             </div>
@@ -941,19 +642,6 @@ function App() {
 
           {/* ── AI ── */}
           {tab === 'ai' && <>
-            <div className="card" style={{padding:20,marginBottom:20}}>
-              <div style={{fontSize:13,fontWeight:600,color:'#1A1D2E',marginBottom:8}}>Anthropic API Key</div>
-              <div style={{display:'flex',gap:10,alignItems:'center'}}>
-                <input
-                  type="password"
-                  placeholder="sk-ant-..."
-                  value={aiKey}
-                  onChange={e => { setAiKey(e.target.value); try{localStorage.setItem('anthropic_key',e.target.value)}catch(_){} }}
-                  style={{flex:1,border:'1px solid #E2E8F0',borderRadius:8,padding:'8px 12px',fontSize:13,fontFamily:"'Roboto Mono',monospace",outline:'none'}}
-                />
-                <span style={{fontSize:11,color:'#94A3B8'}}>Saved in browser · never sent to our server</span>
-              </div>
-            </div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:20}}>
               <div className="card" style={{padding:24,borderTop:'3px solid #6366F1'}}>
                 <div style={{fontSize:15,fontWeight:700,color:'#1A1D2E',marginBottom:10}}>🧠 Strategic Analysis</div>
@@ -992,7 +680,7 @@ function App() {
             </div>
 
             {/* Report type cards */}
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:20,marginBottom:20}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:20}}>
               <div className="card" style={{padding:20,cursor:'pointer',border:reportType==='comp'?'2px solid #6366F1':'1px solid #E8EBF0',transition:'border-color .15s'}} onClick={() => setReportType('comp')}>
                 <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
                   <div style={{width:38,height:38,borderRadius:10,background:'#DBEAFE',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>📊</div>
@@ -1020,28 +708,12 @@ function App() {
                 <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
                   <div style={{width:38,height:38,borderRadius:10,background:'#D1FAE5',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>📋</div>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:14,fontWeight:700,color:'#1A1D2E'}}>Voye Price Catalog</div>
-                    <div style={{fontSize:11,color:'#94A3B8'}}>{Object.values(VOYE_DATA).reduce((s,p)=>s+p.length,0)} plans across {Object.keys(VOYE_DATA).length} countries</div>
+                    <div style={{fontSize:14,fontWeight:700,color:'#1A1D2E'}}>Voye Price Changes</div>
+                    <div style={{fontSize:11,color:'#94A3B8'}}>{N_CHANGES} records from last update</div>
                   </div>
                   {reportType==='voye' && <span style={{background:'#EEF2FF',color:'#6366F1',padding:'2px 10px',borderRadius:20,fontSize:11,fontWeight:600}}>● Selected</span>}
                 </div>
-                <div style={{fontSize:12,color:'#64748B',lineHeight:1.7}}>Destination · Package · Days · Current Price · Date</div>
-              </div>
-
-              <div className="card" style={{padding:20,cursor:'pointer',border:reportType==='reco'?'2px solid #F59E0B':'1px solid #E8EBF0',transition:'border-color .15s',background:reportType==='reco'?'#FFFBEB':'#fff'}} onClick={() => setReportType('reco')}>
-                <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
-                  <div style={{width:38,height:38,borderRadius:10,background:'#FEF3C7',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>🎯</div>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:14,fontWeight:700,color:'#1A1D2E'}}>Pricing Recommendations</div>
-                    <div style={{fontSize:11,color:'#94A3B8'}}>AI-powered repricing analysis</div>
-                  </div>
-                  {reportType==='reco' && <span style={{background:'#FEF3C7',color:'#92400E',padding:'2px 10px',borderRadius:20,fontSize:11,fontWeight:600}}>● Selected</span>}
-                </div>
-                <div style={{fontSize:12,color:'#64748B',lineHeight:1.7}}>
-                  Flags plans &gt;15% above cheapest competitor (Reduce),<br/>
-                  cheapest by &gt;30% (Increase), or competitor changed price (Urgent Review).
-                  Suggests target prices. Exported as multi-sheet .xlsx.
-                </div>
+                <div style={{fontSize:12,color:'#64748B',lineHeight:1.7}}>Destination · Package · Days · Old Price · New Price · Change $ · Change % · Date</div>
               </div>
             </div>
 
@@ -1063,92 +735,36 @@ function App() {
             </div>
 
             {/* Preview */}
-            {previewHeaders.length > 0 && (
+            {previewRows.length > 0 && (
               <div className="card" style={{padding:20}}>
-                {/* Header row */}
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
                   <div>
                     <div style={{fontSize:14,fontWeight:700,color:'#1A1D2E'}}>Preview</div>
-                    <div style={{fontSize:12,color:'#94A3B8'}}>
-                      {previewTotal} records
-                      {reportType==='reco' && previewFilter!=='all' && (' · filtered to ' + previewFilter)}
-                    </div>
+                    <div style={{fontSize:12,color:'#94A3B8'}}>Showing first {previewRows.length} of {previewTotal} records</div>
                   </div>
-                  <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4}}>
-                    <button onClick={downloadReport} style={{background:'#10B981',border:'none',color:'#fff',padding:'8px 20px',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6,boxShadow:'0 2px 8px rgba(16,185,129,.25)'}}>⬇ Download .xlsx</button>
-                    {reportError && <span style={{fontSize:11,color:'#EF4444'}}>{reportError}</span>}
-                  </div>
+                  <button onClick={downloadReport} style={{background:'#10B981',border:'none',color:'#fff',padding:'8px 20px',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6,boxShadow:'0 2px 8px rgba(16,185,129,.25)'}}>⬇ Download .xlsx</button>
                 </div>
-
-                {/* Reco: summary badges + filter tabs */}
-                {reportType==='reco' && previewTotal > 0 && (() => {
-                  const counts = {};
-                  previewRows.forEach(r => { counts[r[7]] = (counts[r[7]]||0)+1; });
-                  const tabs = [['all','All',previewTotal,'#6366F1','#EEF2FF'],['Urgent Review','Urgent Review',counts['Urgent Review']||0,'#F97316','#FFF7ED'],['Reduce','Reduce',counts['Reduce']||0,'#EF4444','#FEF2F2'],['Increase','Increase',counts['Increase']||0,'#10B981','#F0FDF4'],['OK','OK',counts['OK']||0,'#94A3B8','#F8FAFC']];
-                  return (
-                    <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
-                      {tabs.filter(([k,,n]) => k==='all' || n>0).map(([k,label,n,color,bg]) => (
-                        <button key={k} onClick={() => { setPreviewFilter(k); setPreviewExpanded(false); }}
-                          style={{padding:'5px 14px',borderRadius:20,border:'1px solid '+(previewFilter===k?color:color+'44'),background:previewFilter===k?color:bg,color:previewFilter===k?'#fff':color,fontSize:12,fontWeight:600,cursor:'pointer'}}>
-                          {label} <span style={{opacity:.75}}>{n}</span>
-                        </button>
+                <div style={{overflow:'auto',borderRadius:10,border:'1px solid #E8EBF0'}}>
+                  <table style={{width:'100%',borderCollapse:'collapse'}}>
+                    <thead>
+                      <tr style={{background:'#F8F9FC',borderBottom:'2px solid #E8EBF0'}}>
+                        {previewHeaders.map((h,i) => (
+                          <th key={i} style={{padding:'9px 14px',fontSize:10,color:'#64748B',fontWeight:600,letterSpacing:'.5px',textTransform:'uppercase',textAlign:'left',whiteSpace:'nowrap'}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewRows.map((row,ri) => (
+                        <tr key={ri} className="tbl-row" style={{borderBottom:'1px solid #F1F5F9'}}>
+                          {row.map((cell,ci) => (
+                            <td key={ci} style={{padding:'9px 14px',fontSize:12,color:ci===0?'#1A1D2E':(ci===7&&cell==='▲ Up'?'#EF4444':ci===7&&cell==='▼ Down'?'#10B981':'#64748B'),fontWeight:ci===0?600:400,whiteSpace:'nowrap',fontFamily:ci>=3&&ci<=6?"'Roboto Mono',monospace":'inherit'}}>{String(cell)}</td>
+                          ))}
+                        </tr>
                       ))}
-                    </div>
-                  );
-                })()}
-
-                {previewTotal === 0 && <div style={{padding:'20px 0',textAlign:'center',color:'#94A3B8',fontSize:13}}>No records for this report type.</div>}
-                {previewTotal > 0 && (() => {
-                  const filtered = reportType==='reco' && previewFilter!=='all'
-                    ? previewRows.filter(r => r[7]===previewFilter)
-                    : previewRows;
-                  const displayed = previewExpanded ? filtered : filtered.slice(0,10);
-                  const remaining = filtered.length - displayed.length;
-                  return (<>
-                    <div style={{overflow:'auto',borderRadius:10,border:'1px solid #E8EBF0'}}>
-                      <table style={{width:'100%',borderCollapse:'collapse'}}>
-                        <thead>
-                          <tr style={{background:'#F8F9FC',borderBottom:'2px solid #E8EBF0'}}>
-                            {previewHeaders.map((h,i) => (
-                              <th key={i} style={{padding:'9px 14px',fontSize:10,color:'#64748B',fontWeight:600,letterSpacing:'.5px',textTransform:'uppercase',textAlign:'left',whiteSpace:'nowrap'}}>{h}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {displayed.map((row,ri) => {
-                            const rec = reportType==='reco' ? row[7] : null;
-                            const rowBg = rec==='Urgent Review'?'#FFF7ED':rec==='Reduce'?'#FEF2F2':rec==='Increase'?'#F0FDF4':'#fff';
-                            return (
-                              <tr key={ri} style={{background:rowBg,borderBottom:'1px solid #F1F5F9'}}>
-                                {row.map((cell,ci) => {
-                                  let color='#64748B';
-                                  if (ci===0) color='#1A1D2E';
-                                  else if (reportType==='reco'&&ci===7) color=rec==='Urgent Review'?'#F97316':rec==='Reduce'?'#EF4444':rec==='Increase'?'#10B981':'#94A3B8';
-                                  else if (ci===7&&cell==='▲ Up') color='#EF4444';
-                                  else if (ci===7&&cell==='▼ Down') color='#10B981';
-                                  const isMono=reportType==='reco'?(ci>=3&&ci<=5)||ci===8:ci>=3&&ci<=6;
-                                  return <td key={ci} style={{padding:'9px 14px',fontSize:12,color,fontWeight:ci===0||ci===7?600:400,whiteSpace:'nowrap',fontFamily:isMono?"'Roboto Mono',monospace":'inherit'}}>{String(cell)}</td>;
-                                })}
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div style={{marginTop:10,display:'flex',justifyContent:'center',gap:10}}>
-                      {!previewExpanded && remaining > 0 && (
-                        <button onClick={() => setPreviewExpanded(true)} style={{background:'#F8F9FC',border:'1px solid #E2E8F0',color:'#6366F1',padding:'6px 20px',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer'}}>
-                          View More ({remaining} more rows)
-                        </button>
-                      )}
-                      {previewExpanded && (
-                        <button onClick={() => setPreviewExpanded(false)} style={{background:'#F8F9FC',border:'1px solid #E2E8F0',color:'#64748B',padding:'6px 20px',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer'}}>
-                          Collapse
-                        </button>
-                      )}
-                    </div>
-                  </>);
-                })()}
+                    </tbody>
+                  </table>
+                </div>
+                {previewTotal > 10 && <div style={{marginTop:10,fontSize:12,color:'#94A3B8',textAlign:'center'}}>… and {previewTotal-10} more rows in the full download</div>}
               </div>
             )}
 
