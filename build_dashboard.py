@@ -178,7 +178,7 @@ def build_alerts(voye_data, comp_data):
     return (sorted(overpriced, key=lambda x: x['gap'], reverse=True)[:8],
             price_matches[:8], stale)
 
-def build_html(voye_data, comp_data, scraped_at, update_date="22 May 2026"):
+def build_html(voye_data, comp_data, scraped_at, update_date="31 May 2026"):
     stats = build_country_stats(voye_data)
     changes = build_changes(voye_data)
     n_up = len([c for c in changes if c['pct'] > 0])
@@ -282,6 +282,8 @@ const DIFF_DATE="{diff_date}";
 <script type="text/babel">
 const {{ useState, useMemo, useCallback }} = React;
 
+const TOURIST_DESTS = ['United States','Italy','Greece','France','Georgia','United Kingdom','Cyprus','Germany','Thailand','United Arab Emirates','Vietnam','Philippines','Czech Republic','Hungary','Japan','Spain','Portugal','Netherlands','Romania','Poland','Austria','Europe','Asia','Mexico','Canada'];
+
 function Pill({{cls, text}}) {{
   const s = {{
     info:   {{background:'#DBEAFE',color:'#1E40AF'}},
@@ -317,6 +319,8 @@ function App() {{
   const [previewRows, setPreviewRows] = useState([]);
   const [previewHeaders, setPreviewHeaders] = useState([]);
   const [previewTotal, setPreviewTotal] = useState(0);
+  const [touristPkgFilter, setTouristPkgFilter] = useState(null);
+  const [touristDaysFilter, setTouristDaysFilter] = useState(null);
 
   const filteredChanges = useMemo(() => {{
     let list = ALL_CHANGES;
@@ -327,6 +331,23 @@ function App() {{
   }}, [filterMode, searchQ]);
 
   const goCompare = useCallback((country) => {{ setSelCountry(country); setTab('compare'); }}, []);
+
+  const touristPkgs = useMemo(() => {{
+    const pkgs = new Set();
+    TOURIST_DESTS.forEach(dest => {{
+      (VOYE_DATA[dest]||[]).forEach(p => {{ if (p.data) pkgs.add(p.data); }});
+    }});
+    const order = p => {{ const n = parseFloat(p); return p === 'Unlimited' ? 9999 : isNaN(n) ? 9998 : n; }};
+    return [...pkgs].sort((a,b) => order(a) - order(b));
+  }}, []);
+
+  const touristDays = useMemo(() => {{
+    const days = new Set();
+    TOURIST_DESTS.forEach(dest => {{
+      (VOYE_DATA[dest]||[]).forEach(p => {{ if (p.days) days.add(p.days); }});
+    }});
+    return [...days].sort((a,b) => a-b);
+  }}, []);
 
   const runAI = useCallback(async () => {{
     setAiLoading(true); setAiText('');
@@ -394,10 +415,32 @@ function App() {{
       const headers = ['Destination','Package','Days','Competitor','Old Price','New Price','Change %','Direction'];
       const rows = (DIFF_DATA.changes||[])
         .filter(c => filter === 'all' || c.competitor === filter)
-        .map(c => [c.country, c.data||'—', c.days+'d', c.competitor.charAt(0).toUpperCase()+c.competitor.slice(1), '$'+c.prev_price.toFixed(2), '$'+c.curr_price.toFixed(2), (c.change_pct>0?'+':'')+c.change_pct+'%', c.direction==='up'?'▲ Up':'▼ Down']);
+        .map(c => [c.country, c.data||'—', c.days+'d', c.competitor.charAt(0).toUpperCase()+c.competitor.slice(1), '$'+c.prev_price?.toFixed(2) ?? "N/A", '$'+c.curr_price?.toFixed(2) ?? "N/A", (c.change_pct>0?'+':'')+c.change_pct+'%', c.direction==='up'?'▲ Up':'▼ Down']);
       const rawRows = (DIFF_DATA.changes||[])
         .filter(c => filter === 'all' || c.competitor === filter)
         .map(c => [c.country, c.data||'—', c.days, c.competitor.charAt(0).toUpperCase()+c.competitor.slice(1), c.prev_price, c.curr_price, c.change_pct/100, c.direction==='up'?'Up':'Down']);
+      return {{headers, rows, rawRows}};
+    }} else if (type === 'reco') {{
+      const headers = ['Destination','Package','Days','Voye Price','Cheapest Comp','% Diff','Recommendation','Suggested Price'];
+      const rows = [], rawRows = [];
+      Object.entries(VOYE_DATA).forEach(([country, plans]) => {{
+        plans.forEach(p => {{
+          const voyeP = p.new_price || p.price;
+          if (!voyeP) return;
+          let cheapestComp = null;
+          COMPETITORS.forEach(comp => {{
+            const cplans = (COMP_DATA[comp]||{{}})[country] || [];
+            const match = cplans.find(cp => cp.data === p.data) || cplans.find(cp => cp.days === p.days);
+            if (match && match.price && (cheapestComp === null || match.price < cheapestComp)) cheapestComp = match.price;
+          }});
+          if (!cheapestComp) return;
+          const diffPct = Math.round((voyeP - cheapestComp) / cheapestComp * 100);
+          const reco = diffPct > 15 ? 'Reduce' : diffPct < -30 ? 'Increase' : 'OK';
+          const suggested = reco === 'Reduce' ? +(cheapestComp * 0.98).toFixed(2) : reco === 'Increase' ? +(cheapestComp * 1.05).toFixed(2) : +voyeP.toFixed(2);
+          rows.push([country, p.data||'—', (p.days||'?')+'d', '$'+voyeP.toFixed(2), '$'+cheapestComp.toFixed(2), (diffPct>0?'+':'')+diffPct+'%', reco, '$'+suggested.toFixed(2)]);
+          rawRows.push([country, p.data||'—', p.days, voyeP, cheapestComp, diffPct/100, reco, suggested]);
+        }});
+      }});
       return {{headers, rows, rawRows}};
     }} else {{
       const headers = ['Destination','Package','Days','Old Price','New Price','Change $','Change %','Date'];
@@ -405,8 +448,8 @@ function App() {{
       Object.entries(VOYE_DATA).forEach(([country, plans]) => {{
         plans.filter(p => p.changed && p.price && p.new_price).forEach(p => {{
           const pct = Math.round((p.new_price - p.price) / p.price * 100);
-          const diff = (p.new_price - p.price).toFixed(2);
-          rows.push([country, p.data||'—', (p.days||'?')+'d', '$'+p.price.toFixed(2), '$'+p.new_price.toFixed(2), (p.new_price>p.price?'+':'')+diff, (pct>0?'+':'')+pct+'%', UPDATE_DATE]);
+          const diff = (p.new_price - p.price)?.toFixed(2) ?? "N/A";
+          rows.push([country, p.data||'—', (p.days||'?')+'d', '$'+p.price?.toFixed(2) ?? "N/A", '$'+p.new_price?.toFixed(2) ?? "N/A", (p.new_price>p.price?'+':'')+diff, (pct>0?'+':'')+pct+'%', UPDATE_DATE]);
           rawRows.push([country, p.data||'—', p.days, p.price, p.new_price, p.new_price-p.price, (p.new_price-p.price)/p.price, UPDATE_DATE]);
         }});
       }});
@@ -433,6 +476,21 @@ function App() {{
         const cell = ws[addr];
         if (cell && typeof cell.v === 'number') cell.z = ci===6?'0.0%':'$#,##0.00';
       }}));
+    }} else if (reportType === 'reco') {{
+      rawRows.forEach((row, ri) => {{
+        const reco = row[6];
+        const fill = reco === 'Reduce' ? 'FFFEE2E2' : reco === 'Increase' ? 'FFFFF3CD' : 'FFD1FAE5';
+        headers.forEach((_, ci) => {{
+          const addr = XLSX.utils.encode_cell({{r:ri+1,c:ci}});
+          if (!ws[addr]) ws[addr] = {{t:'s',v:''}};
+          ws[addr].s = {{fill:{{fgColor:{{rgb:fill}},patternType:'solid'}}}};
+        }});
+        [[3,'$#,##0.00'],[4,'$#,##0.00'],[5,'0%'],[7,'$#,##0.00']].forEach(([ci,fmt]) => {{
+          const addr = XLSX.utils.encode_cell({{r:ri+1,c:ci}});
+          const cell = ws[addr];
+          if (cell && typeof cell.v === 'number') cell.z = fmt;
+        }});
+      }});
     }} else {{
       rawRows.forEach((_,ri) => [3,4,5,6].forEach(ci => {{
         const addr = XLSX.utils.encode_cell({{r:ri+1,c:ci}});
@@ -443,10 +501,11 @@ function App() {{
     XLSX.utils.book_append_sheet(wb, ws, 'Report');
     const part = reportType==='comp'
       ? (compFilter==='all'?'All_Competitors':compFilter.charAt(0).toUpperCase()+compFilter.slice(1))
+      : reportType==='reco' ? 'Pricing_Recommendations'
       : 'Voye';
     const d1 = dateFrom.replace(/-/g,'');
     const d2 = dateTo && dateTo!==dateFrom ? '_to_'+dateTo.replace(/-/g,'') : '';
-    XLSX.writeFile(wb, part+'_Price_Changes_'+d1+d2+'.xlsx');
+    XLSX.writeFile(wb, part+'_Price_Changes_'+d1+d2+'.xlsx', {{cellStyles:true}});
   }}, [reportType, compFilter, dateFrom, dateTo, buildReportRows]);
 
   const tabLabels = {{overview:'Overview',changes:'Price Changes',compare:'vs Competitors',reports:'Reports',ai:'AI Analysis'}};
@@ -552,6 +611,83 @@ function App() {{
                   <span style={{{{background:k.tbg,color:k.tc,padding:'3px 10px',borderRadius:20,fontSize:11,fontWeight:600}}}}>{{k.trend}}</span>
                 </div>
               ))}}
+            </div>
+
+            {{/* Top 25 Tourist Destinations */}}
+            <div className="card" style={{{{padding:20,marginBottom:20}}}}>
+              <div style={{{{display:'flex',alignItems:'center',gap:8,marginBottom:4}}}}>
+                <div style={{{{width:30,height:30,borderRadius:8,background:'#EDE9FE',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}}}>🗺️</div>
+                <div style={{{{fontSize:14,fontWeight:700,color:'#1A1D2E'}}}}>Top 25 Tourist Destinations</div>
+              </div>
+              <div style={{{{fontSize:12,color:'#94A3B8',marginBottom:14}}}}>Voye pricing vs competitors for top travel markets</div>
+              <div style={{{{marginBottom:10,display:'flex',flexWrap:'wrap',gap:4,alignItems:'center'}}}}>
+                <span style={{{{fontSize:11,color:'#94A3B8',fontWeight:600,letterSpacing:'.5px',textTransform:'uppercase',marginRight:4}}}}>Pkg</span>
+                {{touristPkgs.map(pkg => (
+                  <button key={{pkg}} className={{'dbtn'+(touristPkgFilter===pkg?' on':'')}} style={{{{marginBottom:2}}}} onClick={{() => setTouristPkgFilter(touristPkgFilter===pkg?null:pkg)}}>{{pkg}}</button>
+                ))}}
+              </div>
+              <div style={{{{marginBottom:16,display:'flex',flexWrap:'wrap',gap:4,alignItems:'center'}}}}>
+                <span style={{{{fontSize:11,color:'#94A3B8',fontWeight:600,letterSpacing:'.5px',textTransform:'uppercase',marginRight:4}}}}>Days</span>
+                {{touristDays.map(d => (
+                  <button key={{d}} className={{'dbtn'+(touristDaysFilter===d?' on':'')}} style={{{{marginBottom:2}}}} onClick={{() => setTouristDaysFilter(touristDaysFilter===d?null:d)}}>{{d}}d</button>
+                ))}}
+              </div>
+              <div style={{{{overflow:'auto',borderRadius:10,border:'1px solid #E8EBF0'}}}}>
+                <table style={{{{width:'100%',borderCollapse:'collapse',minWidth:480}}}}>
+                  <thead>
+                    <tr style={{{{background:'#F8F9FC',borderBottom:'2px solid #E8EBF0'}}}}>
+                      <th style={{{{padding:'10px 16px',fontSize:11,color:'#64748B',fontWeight:600,letterSpacing:'.5px',textTransform:'uppercase',textAlign:'left'}}}}>Destination</th>
+                      <th style={{{{padding:'10px 16px',fontSize:11,color:'#6366F1',fontWeight:700,letterSpacing:'.5px',textTransform:'uppercase',textAlign:'right'}}}}>Voye</th>
+                      {{COMPETITORS.map(comp => (
+                        <th key={{comp}} style={{{{padding:'10px 16px',fontSize:11,fontWeight:700,letterSpacing:'.5px',textTransform:'uppercase',textAlign:'right',color:COMP_COLORS[comp]||'#64748B'}}}}>{{comp.charAt(0).toUpperCase()+comp.slice(1)}}</th>
+                      ))}}
+                      <th style={{{{padding:'10px 16px',fontSize:11,color:'#64748B',fontWeight:600,letterSpacing:'.5px',textTransform:'uppercase',textAlign:'right'}}}}>vs Mkt</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{TOURIST_DESTS.map((dest,i) => {{
+                      const plans = VOYE_DATA[dest] || [];
+                      const plan = plans.find(p => (!touristPkgFilter || p.data === touristPkgFilter) && (!touristDaysFilter || p.days === touristDaysFilter));
+                      const voyeP = plan ? (plan.new_price || plan.price) : null;
+                      const compPrices = COMPETITORS.map(comp => {{
+                        if (!plan) return null;
+                        const cplans = (COMP_DATA[comp]||{{}})[dest] || [];
+                        const match = cplans.find(cp => cp.data === plan.data) || cplans.find(cp => cp.days === plan.days);
+                        return match ? match.price : null;
+                      }});
+                      const validComp = compPrices.filter(x => x !== null && x > 0);
+                      const avgComp = validComp.length ? validComp.reduce((a,b)=>a+b,0)/validComp.length : null;
+                      const diffPct = avgComp && voyeP ? Math.round((voyeP - avgComp) / avgComp * 100) : null;
+                      return (
+                        <tr key={{i}} className="tbl-row" style={{{{borderBottom:'1px solid #F1F5F9'}}}}>
+                          <td style={{{{padding:'10px 16px',fontWeight:600,fontSize:13,color:'#1A1D2E'}}}}>{{dest}}</td>
+                          <td style={{{{padding:'10px 16px',textAlign:'right'}}}}>
+                            {{voyeP != null
+                              ? <span style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:13,color:'#6366F1',fontWeight:700}}}}>${{voyeP.toFixed(2)}}</span>
+                              : <span style={{{{color:'#CBD5E1',fontSize:11}}}}>—</span>}}
+                          </td>
+                          {{compPrices.map((cp,j) => {{
+                            const cheaper = cp!=null && voyeP!=null && cp < voyeP;
+                            const pricier = cp!=null && voyeP!=null && cp > voyeP;
+                            return (
+                              <td key={{j}} style={{{{padding:'10px 16px',textAlign:'right'}}}}>
+                                {{cp != null
+                                  ? <span style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:13,color:cheaper?'#EF4444':pricier?'#10B981':'#94A3B8'}}}}>${{cp.toFixed(2)}}</span>
+                                  : <span style={{{{color:'#CBD5E1',fontSize:11}}}}>—</span>}}
+                              </td>
+                            );
+                          }})}}
+                          <td style={{{{padding:'10px 16px',textAlign:'right'}}}}>
+                            {{diffPct !== null
+                              ? <Pill cls={{diffPct>10?'dn':diffPct<-10?'up':'na'}} text={{(diffPct>0?'+':'')+diffPct+'%'}} />
+                              : <span style={{{{color:'#CBD5E1',fontSize:11}}}}>—</span>}}
+                          </td>
+                        </tr>
+                      );
+                    }})}}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {{/* Advantage + Weak Markets */}}
@@ -664,6 +800,14 @@ function App() {{
                   <div style={{{{fontSize:14,fontWeight:700,color:'#1A1D2E'}}}}>Last Price Update</div>
                 </div>
                 <div style={{{{fontSize:12,color:'#94A3B8',marginBottom:16}}}}>{{UPDATE_DATE}} · destinations with most plan changes</div>
+                <div style={{{{marginTop:8}}}}>
+                  {{DIFF_DATA.changes && DIFF_DATA.changes.filter(c=>Math.abs(c.change_pct)>=10).sort((a,b)=>Math.abs(b.change_pct)-Math.abs(a.change_pct)).slice(0,10).map((c,i)=>
+                    <div key={{i}} style={{{{display:'flex',justifyContent:'space-between',padding:'4px 0',borderBottom:'1px solid #F5F5F5',fontSize:12}}}}>
+                      <span>{{c.country}} {{c.data}} {{c.days}}d ({{c.competitor}})</span>
+                      <span style={{{{color:c.change_pct>0?'#EF4444':'#10B981',fontWeight:600}}}}>{{c.change_pct>0?'+':''}}{{c.change_pct?.toFixed(1)}}%</span>
+                    </div>
+                  )}}
+                </div>
                 {{RECENT_UPDATES.map((m,i) => (
                   <div key={{i}} style={{{{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 0',borderBottom:'1px solid #F1F5F9'}}}}>
                     <span style={{{{fontSize:13,fontWeight:600,color:'#1A1D2E'}}}}>{{m.country}}</span>
@@ -683,7 +827,7 @@ function App() {{
                       <div style={{{{fontSize:11,color:'#94A3B8'}}}}>{{c.data}} · {{c.days||'?'}}d</div>
                     </div>
                     <div style={{{{textAlign:'right'}}}}>
-                      <div style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:'#64748B',marginBottom:3}}}}>${{c.old.toFixed(2)}} → <span style={{{{color:c.pct>0?'#EF4444':'#10B981',fontWeight:700}}}}>${{c.new.toFixed(2)}}</span></div>
+                      <div style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:'#64748B',marginBottom:3}}}}>${{c.old?.toFixed(2) ?? "N/A"}} → <span style={{{{color:c.pct>0?'#EF4444':'#10B981',fontWeight:700}}}}>${{c.new?.toFixed(2) ?? "N/A"}}</span></div>
                       <Pill cls={{c.pct>0?'dn':'up'}} text={{(c.pct>0?'+':'')+c.pct+'%'}} />
                     </div>
                   </div>
@@ -766,8 +910,8 @@ function App() {{
                       <td style={{{{padding:'11px 16px',fontWeight:600,fontSize:13,color:'#1A1D2E'}}}}>{{c.country}}</td>
                       <td style={{{{padding:'11px 16px',fontSize:13,color:'#64748B'}}}}>{{c.data||'—'}}</td>
                       <td style={{{{padding:'11px 16px',fontSize:13,color:'#94A3B8'}}}}>{{c.days||'—'}}d</td>
-                      <td style={{{{padding:'11px 16px',textAlign:'right'}}}}><span style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:'#94A3B8'}}}}>${{c.old.toFixed(2)}}</span></td>
-                      <td style={{{{padding:'11px 16px',textAlign:'right'}}}}><span style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:c.pct>0?'#10B981':'#EF4444',fontWeight:700}}}}>${{c.new.toFixed(2)}}</span></td>
+                      <td style={{{{padding:'11px 16px',textAlign:'right'}}}}><span style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:'#94A3B8'}}}}>${{c.old?.toFixed(2) ?? "N/A"}}</span></td>
+                      <td style={{{{padding:'11px 16px',textAlign:'right'}}}}><span style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:12,color:c.pct>0?'#10B981':'#EF4444',fontWeight:700}}}}>${{c.new?.toFixed(2) ?? "N/A"}}</span></td>
                       <td style={{{{padding:'11px 16px',textAlign:'right'}}}}><Pill cls={{c.pct>0?'up':'dn'}} text={{(c.pct>0?'+':'')+c.pct+'%'}} /></td>
                     </tr>
                   ))}}
@@ -827,7 +971,7 @@ function App() {{
                         <td style={{{{padding:'11px 16px',textAlign:'right'}}}}>
                           {{editMode
                             ? <input type="number" step="0.01" style={{{{width:72,background:manualEdits[vKey]!==undefined?'#FFFBEB':'#F8F9FC',border:'1px solid '+(manualEdits[vKey]!==undefined?'#F59E0B':'#E2E8F0'),borderRadius:6,color:'#1A1D2E',padding:'4px 7px',fontSize:12,textAlign:'right',fontFamily:"'Roboto Mono',monospace",outline:'none'}}}} value={{manualEdits[vKey]!==undefined ? manualEdits[vKey] : (baseVoyeP||'').toString()}} onChange={{e => setManualEdits(prev => ({{...prev, [vKey]: e.target.value}}))}} />
-                            : <span style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:13,color:manualEdits[vKey]!==undefined?'#D97706':'#6366F1',fontWeight:700}}}}>${{voyeP!=null?voyeP.toFixed(2):'—'}}</span>
+                            : <span style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:13,color:manualEdits[vKey]!==undefined?'#D97706':'#6366F1',fontWeight:700}}}}>${{voyeP!=null?voyeP?.toFixed(2) ?? "N/A":'—'}}</span>
                           }}
                         </td>
                         {{COMPETITORS.map((comp,j) => {{
@@ -846,7 +990,7 @@ function App() {{
                                   ? <input type="number" step="0.01" style={{{{width:72,background:isEdited?'#FFFBEB':'#F8F9FC',border:'1px solid '+(isEdited?'#F59E0B':'#E2E8F0'),borderRadius:6,color:isEdited?'#D97706':(cheaper?'#EF4444':pricier?'#10B981':'#64748B'),padding:'4px 7px',fontSize:12,textAlign:'right',fontFamily:"'Roboto Mono',monospace",outline:'none'}}}} value={{isEdited ? manualEdits[cKey] : (baseCompP||'').toString()}} onChange={{e => setManualEdits(prev => ({{...prev, [cKey]: e.target.value}}))}} />
                                   : <span style={{{{color:'#CBD5E1',fontSize:11}}}}>—</span>
                                 : cp !== null
-                                  ? <span style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:13,color:isEdited?'#D97706':(cheaper?'#EF4444':pricier?'#10B981':'#94A3B8')}}}}>${{cp.toFixed(2)}}</span>
+                                  ? <span style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:13,color:isEdited?'#D97706':(cheaper?'#EF4444':pricier?'#10B981':'#94A3B8')}}}}>${{cp?.toFixed(2) ?? "N/A"}}</span>
                                   : <span style={{{{color:'#CBD5E1',fontSize:11}}}}>—</span>
                               }}
                             </td>
@@ -943,6 +1087,17 @@ function App() {{
                   {{reportType==='voye' && <span style={{{{background:'#EEF2FF',color:'#6366F1',padding:'2px 10px',borderRadius:20,fontSize:11,fontWeight:600}}}}>● Selected</span>}}
                 </div>
                 <div style={{{{fontSize:12,color:'#64748B',lineHeight:1.7}}}}>Destination · Package · Days · Old Price · New Price · Change $ · Change % · Date</div>
+              </div>
+              <div className="card" style={{{{padding:20,cursor:'pointer',border:reportType==='reco'?'2px solid #6366F1':'1px solid #E8EBF0',transition:'border-color .15s'}}}} onClick={{() => setReportType('reco')}}>
+                <div style={{{{display:'flex',alignItems:'center',gap:10,marginBottom:12}}}}>
+                  <div style={{{{width:38,height:38,borderRadius:10,background:'#FEF3C7',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}}}>💡</div>
+                  <div style={{{{flex:1}}}}>
+                    <div style={{{{fontSize:14,fontWeight:700,color:'#1A1D2E'}}}}>Pricing Recommendations</div>
+                    <div style={{{{fontSize:11,color:'#94A3B8'}}}}>AI-powered repricing suggestions</div>
+                  </div>
+                  {{reportType==='reco' && <span style={{{{background:'#EEF2FF',color:'#6366F1',padding:'2px 10px',borderRadius:20,fontSize:11,fontWeight:600}}}}>● Selected</span>}}
+                </div>
+                <div style={{{{fontSize:12,color:'#64748B',lineHeight:1.7}}}}>Destination · Package · Days · Voye Price · Cheapest Comp · % Diff · Recommendation · Suggested Price</div>
               </div>
             </div>
 
