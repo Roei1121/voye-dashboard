@@ -1386,7 +1386,7 @@ function InfluencerDetail({{influencer,selectedMonth,setSelectedMonth,onBack}}) 
                     <td style={{{{padding:'10px 16px',textAlign:'right',fontWeight:700,fontSize:13,color:net>=0?'#10B981':'#EF4444'}}}}>${{net.toFixed(2)}}</td>
                   </tr>
                 );
-              }}}}
+              }})}}
             </tbody>
           </table>
         </div>
