@@ -23,6 +23,8 @@ DATA_DIR   = BASE_DIR / "data"
 PRICES_FILE = DATA_DIR / "competitor_prices.json"
 VOYE_FILE   = DATA_DIR / "voye_master.json"
 OUT_FILE    = BASE_DIR / "index.html"
+INFLUENCER_FILE = BASE_DIR / "public" / "influencer_data.json"
+INFLUENCER_FILE_ALT = DATA_DIR / "influencer_data.json"
 
 COMP_COLORS = {
     "airalo":  "#F97316",
@@ -47,6 +49,13 @@ def load_voye_data():
             return json.load(f)
     print("WARNING: voye_master.json not found — using last known Voye prices.")
     return {}
+
+def load_influencer_data():
+    for path in [INFLUENCER_FILE, INFLUENCER_FILE_ALT]:
+        if path.exists():
+            with open(path) as f:
+                return json.load(f)
+    return {"influencers": []}
 
 def build_country_stats(voye_data):
     stats = []
@@ -178,7 +187,11 @@ def build_alerts(voye_data, comp_data):
     return (sorted(overpriced, key=lambda x: x['gap'], reverse=True)[:8],
             price_matches[:8], stale)
 
-def build_html(voye_data, comp_data, scraped_at, update_date="31 May 2026"):
+def build_html(voye_data, comp_data, scraped_at, update_date=None, influencer_data=None):
+    from datetime import datetime
+    if not update_date and scraped_at:
+        try: update_date = datetime.fromisoformat(scraped_at[:10]).strftime("%d %b %Y")
+        except: update_date = scraped_at[:10]
     stats = build_country_stats(voye_data)
     changes = build_changes(voye_data)
     n_up = len([c for c in changes if c['pct'] > 0])
@@ -226,6 +239,10 @@ def build_html(voye_data, comp_data, scraped_at, update_date="31 May 2026"):
     alerts_matches_json    = json.dumps(alerts_matches,    separators=(',',':'))
     alerts_stale_json      = json.dumps(alerts_stale,      separators=(',',':'))
     recent_updates_json    = json.dumps(recent_updates,    separators=(',',':'))
+
+    if influencer_data is None:
+        influencer_data = {"influencers": []}
+    influencer_json = json.dumps(influencer_data, separators=(',',':'))
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -278,6 +295,7 @@ const UPDATE_DATE="{update_date}";
 const SCAN_DATE="{scan_date}";
 const DIFF_DATA={diff_json};
 const DIFF_DATE="{diff_date}";
+const INFLUENCER_DATA={influencer_json};
 </script>
 <script type="text/babel">
 const {{ useState, useMemo, useCallback }} = React;
@@ -508,7 +526,7 @@ function App() {{
     XLSX.writeFile(wb, part+'_Price_Changes_'+d1+d2+'.xlsx', {{cellStyles:true}});
   }}, [reportType, compFilter, dateFrom, dateTo, buildReportRows]);
 
-  const tabLabels = {{overview:'Overview',changes:'Price Changes',compare:'vs Competitors',reports:'Reports',ai:'AI Analysis'}};
+  const tabLabels = {{overview:'Overview',changes:'Price Changes',compare:'vs Competitors',reports:'Reports',ai:'AI Analysis',influencers:'Influencers'}};
 
   return (
     <div style={{{{display:'flex',minHeight:'100vh',fontFamily:"'Inter',sans-serif",background:'#F8F9FC'}}}}>
@@ -544,7 +562,7 @@ function App() {{
           </div>
         </div>
         <nav style={{{{padding:'12px 10px',flex:1}}}}>
-          {{[['overview','📊','Overview'],['changes','🔄','Price Changes'],['compare','🔍','vs Competitors'],['reports','📥','Reports'],['ai','🤖','AI Analysis']].map(([id,icon,label]) => (
+          {{[['overview','📊','Overview'],['changes','🔄','Price Changes'],['compare','🔍','vs Competitors'],['reports','📥','Reports'],['ai','🤖','AI Analysis'],['influencers','👥','Influencers']].map(([id,icon,label]) => (
             <button key={{id}} className={{'nav-item'+(tab===id?' active':'')}} onClick={{() => setTab(id)}}>
               <span style={{{{fontSize:15}}}}>{{icon}}</span>{{label}}
             </button>
@@ -1154,10 +1172,234 @@ function App() {{
 
           </>}}
 
+          {{tab === 'influencers' && <InfluencerDashboard />}}
+
         </div>
       </div>
     </div>
   );
+}}
+
+function InfluencerOverview({{onSelect}}) {{
+  const influencers = (INFLUENCER_DATA.influencers || []);
+  const getLatest = inf => {{
+    const ms = [...(inf.months||[])].sort((a,b)=>b.month_key.localeCompare(a.month_key));
+    return ms[0]||null;
+  }};
+  const getPrev = inf => {{
+    const ms = [...(inf.months||[])].sort((a,b)=>b.month_key.localeCompare(a.month_key));
+    return ms[1]||null;
+  }};
+  const activeCount = influencers.filter(inf=>(inf.months||[]).length>0).length;
+  const latestMonths = influencers.map(inf=>getLatest(inf)).filter(Boolean);
+  const totalRevenue = latestMonths.reduce((s,m)=>s+(m.total_revenue||0),0);
+  const totalRetainers = latestMonths.reduce((s,m)=>s+(m.base_payment||0),0);
+  const totalCommissions = latestMonths.reduce((s,m)=>s+(m.total_commission||0),0);
+  const netPL = totalRevenue - totalRetainers - totalCommissions;
+  const ranked = influencers.map(inf=>{{
+    const latest = getLatest(inf);
+    const prev = getPrev(inf);
+    if (!latest) return null;
+    const rev = latest.total_revenue||0;
+    const prevRev = prev ? (prev.total_revenue||0) : 0;
+    const pct = prevRev>0 ? Math.round((rev-prevRev)/prevRev*100) : null;
+    const net = rev - (latest.base_payment||0) - (latest.total_commission||0);
+    return {{inf,latest,rev,pct,net}};
+  }}).filter(Boolean).sort((a,b)=>b.rev-a.rev);
+  const profitable = ranked.filter(r=>r.net>0);
+  const unprofitable = ranked.filter(r=>r.net<=0);
+  const fmt = n => '$'+n.toFixed(2);
+  return (
+    <div>
+      <div style={{{{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:16,marginBottom:24}}}}>
+        {{[
+          {{icon:'👥',val:activeCount,label:'Active Influencers',color:'#6366F1',bg:'#EEF2FF'}},
+          {{icon:'💰',val:'$'+totalRevenue.toFixed(0),label:'Total Revenue',color:'#10B981',bg:'#D1FAE5'}},
+          {{icon:'📋',val:'$'+totalRetainers.toFixed(0),label:'Total Retainers',color:'#F59E0B',bg:'#FEF3C7'}},
+          {{icon:'💸',val:'$'+totalCommissions.toFixed(0),label:'Total Commissions',color:'#8B5CF6',bg:'#EDE9FE'}},
+          {{icon:netPL>=0?'📈':'📉',val:(netPL>=0?'+':'')+fmt(netPL),label:'Net P&L',color:netPL>=0?'#10B981':'#EF4444',bg:netPL>=0?'#D1FAE5':'#FEE2E2'}},
+        ].map((k,i)=>(
+          <div key={{i}} className="card" style={{{{padding:20}}}}>
+            <div style={{{{width:42,height:42,borderRadius:12,background:k.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,marginBottom:14}}}}>{{k.icon}}</div>
+            <div style={{{{fontSize:26,fontWeight:800,color:'#1A1D2E',letterSpacing:'-1px',lineHeight:1,marginBottom:6}}}}>{{k.val}}</div>
+            <div style={{{{fontSize:13,color:'#64748B',fontWeight:500}}}}>{{k.label}}</div>
+          </div>
+        ))}}
+      </div>
+      <div className="card" style={{{{padding:20,marginBottom:20}}}}>
+        <div style={{{{fontSize:14,fontWeight:700,color:'#1A1D2E',marginBottom:16}}}}>📊 Influencer Rankings — Latest Month</div>
+        {{ranked.length===0
+          ? <div style={{{{color:'#94A3B8',textAlign:'center',padding:'30px 0',fontSize:13}}}}>No influencer data yet. Add XLSX files to data/influencers/ and run scripts/process_influencers.py</div>
+          : <div style={{{{overflow:'auto',borderRadius:10,border:'1px solid #E8EBF0'}}}}>
+              <table style={{{{width:'100%',borderCollapse:'collapse'}}}}>
+                <thead>
+                  <tr style={{{{background:'#F8F9FC',borderBottom:'2px solid #E8EBF0'}}}}>
+                    {{['#','Influencer','Revenue','vs Prev','Orders','AOV','Net P&L'].map((h,i)=>(
+                      <th key={{i}} style={{{{padding:'10px 16px',fontSize:11,color:'#64748B',fontWeight:600,letterSpacing:'.5px',textTransform:'uppercase',textAlign:i===1?'left':'right',whiteSpace:'nowrap'}}}}>{{h}}</th>
+                    ))}}
+                  </tr>
+                </thead>
+                <tbody>
+                  {{ranked.map(({{inf,latest,rev,pct,net}},i)=>(
+                    <tr key={{inf.id}} className="tbl-row" style={{{{borderBottom:'1px solid #F1F5F9',cursor:'pointer'}}}} onClick={{()=>onSelect(inf,latest.month_key)}}>
+                      <td style={{{{padding:'10px 16px',textAlign:'right',fontSize:13,color:'#94A3B8',fontWeight:600}}}}>{{i+1}}</td>
+                      <td style={{{{padding:'10px 16px',fontWeight:600,fontSize:13,color:'#1A1D2E'}}}}>{{inf.name}}</td>
+                      <td style={{{{padding:'10px 16px',textAlign:'right',fontFamily:"'Roboto Mono',monospace",fontSize:13,color:'#6366F1',fontWeight:700}}}}>${{rev.toFixed(2)}}</td>
+                      <td style={{{{padding:'10px 16px',textAlign:'right'}}}}>
+                        {{pct!==null?<span style={{{{color:pct>=0?'#10B981':'#EF4444',fontWeight:600,fontSize:13}}}}>({{pct>=0?'+':''}}{{pct}}%)</span>:<span style={{{{color:'#CBD5E1',fontSize:11}}}}>—</span>}}
+                      </td>
+                      <td style={{{{padding:'10px 16px',textAlign:'right',fontSize:13,color:'#475569'}}}}>{{latest.total_plans}}</td>
+                      <td style={{{{padding:'10px 16px',textAlign:'right',fontFamily:"'Roboto Mono',monospace",fontSize:13,color:'#475569'}}}}>${{(latest.avg_order_value||0).toFixed(2)}}</td>
+                      <td style={{{{padding:'10px 16px',textAlign:'right',fontWeight:700,fontSize:13,color:net>=0?'#10B981':'#EF4444'}}}}>${{net.toFixed(2)}}</td>
+                    </tr>
+                  ))}}
+                </tbody>
+              </table>
+            </div>
+        }}
+      </div>
+      <div style={{{{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}}}>
+        {{[
+          {{title:'✅ Profitable Influencers',sub:'Revenue > retainer + commission',items:profitable,sign:'+',color:'#10B981'}},
+          {{title:'⚠️ Unprofitable Influencers',sub:'Retainer + commission > revenue',items:unprofitable,sign:'',color:'#EF4444'}},
+        ].map((panel,pi)=>(
+          <div key={{pi}} className="card" style={{{{padding:20}}}}>
+            <div style={{{{fontSize:14,fontWeight:700,color:'#1A1D2E',marginBottom:4}}}}>{{panel.title}}</div>
+            <div style={{{{fontSize:12,color:'#94A3B8',marginBottom:14}}}}>{{panel.sub}}</div>
+            {{panel.items.length===0
+              ? <div style={{{{color:'#94A3B8',fontSize:13,textAlign:'center',padding:'20px 0'}}}}>No data yet</div>
+              : panel.items.map(({{inf,net}})=>(
+                <div key={{inf.id}} onClick={{()=>onSelect(inf,null)}} style={{{{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid #F1F5F9',cursor:'pointer'}}}}>
+                  <span style={{{{fontSize:13,fontWeight:500,color:'#1A1D2E'}}}}>{{inf.name}}</span>
+                  <span style={{{{color:panel.color,fontWeight:700,fontSize:13}}}}>{{net>=0?'+':''}}${{Math.abs(net).toFixed(2)}}</span>
+                </div>
+              ))
+            }}
+          </div>
+        ))}}
+      </div>
+    </div>
+  );
+}}
+
+function InfluencerDetail({{influencer,selectedMonth,setSelectedMonth,onBack}}) {{
+  const months = [...(influencer.months||[])].sort((a,b)=>b.month_key.localeCompare(a.month_key));
+  const activeKey = selectedMonth||(months[0]?months[0].month_key:null);
+  const month = months.find(m=>m.month_key===activeKey)||months[0];
+  const allTimeRevenue = months.reduce((s,m)=>s+(m.total_revenue||0),0);
+  const allTimePlans = months.reduce((s,m)=>s+(m.total_plans||0),0);
+  const allTimeAOV = allTimePlans>0?allTimeRevenue/allTimePlans:0;
+  const maxRev = Math.max(...months.map(m=>m.total_revenue||0),1);
+  if (!month) return (
+    <div>
+      <button onClick={{onBack}} style={{{{background:'#EEF2FF',border:'none',color:'#6366F1',fontSize:13,fontWeight:600,cursor:'pointer',padding:'6px 14px',borderRadius:8,marginBottom:20}}}}>← Back</button>
+      <div style={{{{color:'#94A3B8',textAlign:'center',padding:40,fontSize:13}}}}>No data for this influencer yet.</div>
+    </div>
+  );
+  return (
+    <div>
+      <div style={{{{display:'flex',alignItems:'center',gap:12,marginBottom:20}}}}>
+        <button onClick={{onBack}} style={{{{background:'#EEF2FF',border:'none',color:'#6366F1',fontSize:13,fontWeight:600,cursor:'pointer',padding:'6px 14px',borderRadius:8}}}}>← Back</button>
+        <div style={{{{fontSize:20,fontWeight:800,color:'#1A1D2E'}}}}>{{influencer.name}}</div>
+      </div>
+      <div style={{{{display:'flex',gap:6,marginBottom:20,flexWrap:'wrap'}}}}>
+        {{months.map(m=>(
+          <button key={{m.month_key}} className={{'fbtn'+(activeKey===m.month_key?' on':'')}} onClick={{()=>setSelectedMonth(m.month_key)}}>{{m.month_label}}</button>
+        ))}}
+      </div>
+      <div style={{{{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:14,marginBottom:20}}}}>
+        {{[
+          {{icon:'💰',val:'$'+(month.total_revenue||0).toFixed(2),label:'Revenue'}},
+          {{icon:'📦',val:month.total_plans||0,label:'Orders'}},
+          {{icon:'💵',val:'$'+(month.avg_order_value||0).toFixed(2),label:'AOV This Month'}},
+          {{icon:'📊',val:'$'+allTimeAOV.toFixed(2),label:'All-Time AOV'}},
+          {{icon:'📋',val:'$'+(month.base_payment||0).toFixed(2),label:'Retainer'}},
+          {{icon:'💸',val:'$'+(month.total_commission||0).toFixed(2),label:'Commission'}},
+        ].map((k,i)=>(
+          <div key={{i}} className="card" style={{{{padding:16}}}}>
+            <div style={{{{fontSize:16,marginBottom:8}}}}>{{k.icon}}</div>
+            <div style={{{{fontSize:20,fontWeight:800,color:'#1A1D2E',letterSpacing:'-0.5px',marginBottom:4}}}}>{{k.val}}</div>
+            <div style={{{{fontSize:11,color:'#64748B',fontWeight:500}}}}>{{k.label}}</div>
+          </div>
+        ))}}
+      </div>
+      <div className="card" style={{{{padding:20,marginBottom:20}}}}>
+        <div style={{{{fontSize:14,fontWeight:700,color:'#1A1D2E',marginBottom:16}}}}>📈 Revenue Trend</div>
+        <div style={{{{display:'flex',alignItems:'flex-end',gap:8,height:130,padding:'0 4px'}}}}>
+          {{[...months].reverse().map(m=>{{
+            const h = Math.max(4,Math.round((m.total_revenue||0)/maxRev*110));
+            const isActive = m.month_key===activeKey;
+            return (
+              <div key={{m.month_key}} style={{{{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4,cursor:'pointer',minWidth:0}}}} onClick={{()=>setSelectedMonth(m.month_key)}}>
+                <div style={{{{fontSize:10,color:'#94A3B8',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'100%'}}}}>${{(m.total_revenue||0).toFixed(0)}}</div>
+                <div style={{{{width:'100%',height:h,borderRadius:'4px 4px 0 0',background:isActive?'#6366F1':'#C7D2FE',transition:'all .15s'}}}}></div>
+                <div style={{{{fontSize:9,color:isActive?'#6366F1':'#94A3B8',fontWeight:600,textAlign:'center',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'100%'}}}}>{{m.month_label.split(' ')[0].substring(0,3)}}</div>
+              </div>
+            );
+          }})}}
+        </div>
+      </div>
+      <div style={{{{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:20}}}}>
+        <div className="card" style={{{{padding:20}}}}>
+          <div style={{{{fontSize:14,fontWeight:700,color:'#1A1D2E',marginBottom:14}}}}>📦 Top 10 Packages</div>
+          {{(month.top_products||[]).slice(0,10).map((p,i)=>(
+            <div key={{i}} style={{{{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',borderBottom:'1px solid #F1F5F9'}}}}>
+              <span style={{{{fontSize:12,color:'#475569',flex:1,marginRight:8,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}}}>{{p.name}}</span>
+              <span style={{{{fontSize:12,fontWeight:700,color:'#6366F1',flexShrink:0}}}}>{{p.count}}</span>
+            </div>
+          ))}}
+          {{(!month.top_products||month.top_products.length===0)&&<div style={{{{color:'#94A3B8',fontSize:13}}}}>No data</div>}}
+        </div>
+        <div className="card" style={{{{padding:20}}}}>
+          <div style={{{{fontSize:14,fontWeight:700,color:'#1A1D2E',marginBottom:14}}}}>🌍 Top 10 Destinations</div>
+          {{(month.top_destinations||[]).slice(0,10).map((d,i)=>(
+            <div key={{i}} style={{{{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',borderBottom:'1px solid #F1F5F9'}}}}>
+              <span style={{{{fontSize:12,color:'#475569',flex:1,marginRight:8}}}}>{{d.name}}</span>
+              <span style={{{{fontSize:12,fontWeight:700,color:'#6366F1',flexShrink:0}}}}>{{d.count}}</span>
+            </div>
+          ))}}
+          {{(!month.top_destinations||month.top_destinations.length===0)&&<div style={{{{color:'#94A3B8',fontSize:13}}}}>No data</div>}}
+        </div>
+      </div>
+      <div className="card" style={{{{padding:20}}}}>
+        <div style={{{{fontSize:14,fontWeight:700,color:'#1A1D2E',marginBottom:14}}}}>📅 Monthly AOV History</div>
+        <div style={{{{overflow:'auto',borderRadius:10,border:'1px solid #E8EBF0'}}}}>
+          <table style={{{{width:'100%',borderCollapse:'collapse'}}}}>
+            <thead>
+              <tr style={{{{background:'#F8F9FC',borderBottom:'2px solid #E8EBF0'}}}}>
+                {{['Month','Revenue','Orders','AOV','Retainer','Commission','Net'].map((h,i)=>(
+                  <th key={{i}} style={{{{padding:'10px 16px',fontSize:11,color:'#64748B',fontWeight:600,letterSpacing:'.5px',textTransform:'uppercase',textAlign:i===0?'left':'right'}}}}>{{h}}</th>
+                ))}}
+              </tr>
+            </thead>
+            <tbody>
+              {{months.map(m=>{{
+                const net=(m.total_revenue||0)-(m.base_payment||0)-(m.total_commission||0);
+                return (
+                  <tr key={{m.month_key}} className="tbl-row" style={{{{borderBottom:'1px solid #F1F5F9',background:m.month_key===activeKey?'#F0F4FF':undefined}}}}>
+                    <td style={{{{padding:'10px 16px',fontSize:13,fontWeight:600,color:'#1A1D2E'}}}}>{{m.month_label}}</td>
+                    <td style={{{{padding:'10px 16px',textAlign:'right',fontFamily:"'Roboto Mono',monospace",fontSize:13,color:'#6366F1',fontWeight:700}}}}>${{(m.total_revenue||0).toFixed(2)}}</td>
+                    <td style={{{{padding:'10px 16px',textAlign:'right',fontSize:13,color:'#475569'}}}}>{{m.total_plans}}</td>
+                    <td style={{{{padding:'10px 16px',textAlign:'right',fontFamily:"'Roboto Mono',monospace",fontSize:13,color:'#475569'}}}}>${{(m.avg_order_value||0).toFixed(2)}}</td>
+                    <td style={{{{padding:'10px 16px',textAlign:'right',fontFamily:"'Roboto Mono',monospace",fontSize:13,color:'#F59E0B'}}}}>${{(m.base_payment||0).toFixed(2)}}</td>
+                    <td style={{{{padding:'10px 16px',textAlign:'right',fontFamily:"'Roboto Mono',monospace",fontSize:13,color:'#8B5CF6'}}}}>${{(m.total_commission||0).toFixed(2)}}</td>
+                    <td style={{{{padding:'10px 16px',textAlign:'right',fontWeight:700,fontSize:13,color:net>=0?'#10B981':'#EF4444'}}}}>${{net.toFixed(2)}}</td>
+                  </tr>
+                );
+              }}}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}}
+
+function InfluencerDashboard() {{
+  const [selInf,setSelInf] = useState(null);
+  const [selMonth,setSelMonth] = useState(null);
+  if (selInf) return <InfluencerDetail influencer={{selInf}} selectedMonth={{selMonth}} setSelectedMonth={{setSelMonth}} onBack={{()=>{{setSelInf(null);setSelMonth(null);}}}} />;
+  return <InfluencerOverview onSelect={{(inf,mk)=>{{setSelInf(inf);setSelMonth(mk);}}}} />;
 }}
 
 ReactDOM.render(<App />, document.getElementById('root'));
@@ -1198,8 +1440,10 @@ def main():
         print("WARNING: No Voye data found. Using competitor data only.")
         voye_data = {}
 
-    print(f"Building dashboard — {len(voye_data)} Voye countries, {len(comp_data)} competitors")
-    html = build_html(voye_data, comp_data, scraped_at)
+    influencer_data = load_influencer_data()
+    n_inf = len([i for i in influencer_data.get('influencers', []) if i.get('months')])
+    print(f"Building dashboard — {len(voye_data)} Voye countries, {len(comp_data)} competitors, {n_inf} influencers")
+    html = build_html(voye_data, comp_data, scraped_at, influencer_data=influencer_data)
 
     OUT_FILE.write_text(html, encoding='utf-8')
     print(f"✓ Built {OUT_FILE} ({len(html):,} chars)")
