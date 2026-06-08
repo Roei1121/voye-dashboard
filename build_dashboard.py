@@ -316,6 +316,7 @@ function Pill({{cls, text}}) {{
 
 function App() {{
   const [tab, setTab] = useState('overview');
+  const [mode, setMode] = useState('pricing');
   const [filterMode, setFilterMode] = useState('all');
   const [searchQ, setSearchQ] = useState('');
   const [selCountry, setSelCountry] = useState(Object.keys(VOYE_DATA).sort()[0]);
@@ -526,7 +527,7 @@ function App() {{
     XLSX.writeFile(wb, part+'_Price_Changes_'+d1+d2+'.xlsx', {{cellStyles:true}});
   }}, [reportType, compFilter, dateFrom, dateTo, buildReportRows]);
 
-  const tabLabels = {{overview:'Overview',changes:'Price Changes',compare:'vs Competitors',reports:'Reports',ai:'AI Analysis',influencers:'Influencers'}};
+  const tabLabels = {{overview:'Overview',changes:'Price Changes',compare:'vs Competitors',reports:'Reports',ai:'AI Analysis'}};
 
   return (
     <div style={{{{display:'flex',minHeight:'100vh',fontFamily:"'Inter',sans-serif",background:'#F8F9FC'}}}}>
@@ -552,30 +553,36 @@ function App() {{
 
       {{/* ── SIDEBAR ── */}}
       <div style={{{{width:220,background:'#fff',borderRight:'1px solid #E8EBF0',display:'flex',flexDirection:'column',position:'fixed',left:0,top:0,bottom:0,zIndex:100}}}}>
-        <div style={{{{padding:'18px 16px',borderBottom:'1px solid #E8EBF0'}}}}>
-          <div style={{{{display:'flex',alignItems:'center',gap:10}}}}>
+        <div style={{{{padding:'16px 14px',borderBottom:'1px solid #E8EBF0'}}}}>
+          <div style={{{{display:'flex',alignItems:'center',gap:10,marginBottom:12}}}}>
             <div style={{{{width:34,height:34,borderRadius:10,background:'linear-gradient(135deg,#6366F1,#8B5CF6)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}}}>📡</div>
             <div>
               <div style={{{{fontSize:14,fontWeight:700,color:'#1A1D2E'}}}}>Voye</div>
-              <div style={{{{fontSize:10,color:'#94A3B8',letterSpacing:'.4px',fontWeight:600}}}}>PRICE INTEL</div>
+              <div style={{{{fontSize:10,color:'#94A3B8',letterSpacing:'.4px',fontWeight:600}}}}>INTELLIGENCE</div>
             </div>
           </div>
-        </div>
-        <nav style={{{{padding:'12px 10px',flex:1}}}}>
-          {{[['overview','📊','Overview'],['changes','🔄','Price Changes'],['compare','🔍','vs Competitors'],['reports','📥','Reports'],['ai','🤖','AI Analysis'],['influencers','👥','Influencers']].map(([id,icon,label]) => (
-            <button key={{id}} className={{'nav-item'+(tab===id?' active':'')}} onClick={{() => setTab(id)}}>
-              <span style={{{{fontSize:15}}}}>{{icon}}</span>{{label}}
-            </button>
-          ))}}
-        </nav>
-        <div style={{{{padding:'14px 16px',borderTop:'1px solid #E8EBF0'}}}}>
-          <div style={{{{fontSize:10,color:'#94A3B8',fontWeight:600,letterSpacing:'.5px',marginBottom:4}}}}>LAST SCAN</div>
-          <div style={{{{fontSize:12,fontWeight:600,color:'#475569',marginBottom:8}}}}>{{SCAN_DATE}}</div>
-          <div style={{{{display:'flex',gap:5}}}}>
-            <span style={{{{background:'#D1FAE5',color:'#065F46',padding:'2px 8px',borderRadius:10,fontSize:11,fontWeight:600}}}}>↑ {{N_UP}}</span>
-            <span style={{{{background:'#FEE2E2',color:'#991B1B',padding:'2px 8px',borderRadius:10,fontSize:11,fontWeight:600}}}}>↓ {{N_DN}}</span>
+          <div style={{{{display:'flex',background:'#F1F5F9',borderRadius:8,padding:3}}}}>
+            <button onClick={{()=>setMode('pricing')}} style={{{{flex:1,background:mode==='pricing'?'#fff':'transparent',border:'none',borderRadius:6,padding:'5px 0',fontSize:11,fontWeight:600,color:mode==='pricing'?'#6366F1':'#94A3B8',cursor:'pointer',boxShadow:mode==='pricing'?'0 1px 3px rgba(0,0,0,.1)':'none',transition:'all .15s'}}}}>📡 Pricing</button>
+            <button onClick={{()=>setMode('influencers')}} style={{{{flex:1,background:mode==='influencers'?'#fff':'transparent',border:'none',borderRadius:6,padding:'5px 0',fontSize:11,fontWeight:600,color:mode==='influencers'?'#6366F1':'#94A3B8',cursor:'pointer',boxShadow:mode==='influencers'?'0 1px 3px rgba(0,0,0,.1)':'none',transition:'all .15s'}}}}>👥 Influencers</button>
           </div>
         </div>
+        {{mode === 'pricing' && <>
+          <nav style={{{{padding:'12px 10px',flex:1}}}}>
+            {{[['overview','📊','Overview'],['changes','🔄','Price Changes'],['compare','🔍','vs Competitors'],['reports','📥','Reports'],['ai','🤖','AI Analysis']].map(([id,icon,label]) => (
+              <button key={{id}} className={{'nav-item'+(tab===id?' active':'')}} onClick={{() => setTab(id)}}>
+                <span style={{{{fontSize:15}}}}>{{icon}}</span>{{label}}
+              </button>
+            ))}}
+          </nav>
+          <div style={{{{padding:'14px 16px',borderTop:'1px solid #E8EBF0'}}}}>
+            <div style={{{{fontSize:10,color:'#94A3B8',fontWeight:600,letterSpacing:'.5px',marginBottom:4}}}}>LAST SCAN</div>
+            <div style={{{{fontSize:12,fontWeight:600,color:'#475569',marginBottom:8}}}}>{{SCAN_DATE}}</div>
+            <div style={{{{display:'flex',gap:5}}}}>
+              <span style={{{{background:'#D1FAE5',color:'#065F46',padding:'2px 8px',borderRadius:10,fontSize:11,fontWeight:600}}}}>↑ {{N_UP}}</span>
+              <span style={{{{background:'#FEE2E2',color:'#991B1B',padding:'2px 8px',borderRadius:10,fontSize:11,fontWeight:600}}}}>↓ {{N_DN}}</span>
+            </div>
+          </div>
+        </>}}
       </div>
 
       {{/* ── MAIN ── */}}
@@ -584,17 +591,17 @@ function App() {{
         {{/* TOP BAR */}}
         <div style={{{{background:'#fff',borderBottom:'1px solid #E8EBF0',padding:'0 28px',height:60,display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:50,boxShadow:'0 1px 4px rgba(0,0,0,.04)'}}}}>
           <div>
-            <div style={{{{fontSize:17,fontWeight:700,color:'#1A1D2E'}}}}>{{tabLabels[tab]}}</div>
-            <div style={{{{fontSize:11,color:'#94A3B8'}}}}>Updated {{UPDATE_DATE}}</div>
+            <div style={{{{fontSize:17,fontWeight:700,color:'#1A1D2E'}}}}>{{mode==='influencers'?'Influencer Marketing':tabLabels[tab]}}</div>
+            <div style={{{{fontSize:11,color:'#94A3B8'}}}}>{{mode==='influencers'?'Performance & ROI':'Updated '+UPDATE_DATE}}</div>
           </div>
-          <div style={{{{display:'flex',gap:8,alignItems:'center'}}}}>
+          {{mode==='pricing' && <div style={{{{display:'flex',gap:8,alignItems:'center'}}}}>
             <label style={{{{cursor:'pointer'}}}}>
               <input type="file" accept=".xlsx" style={{{{display:'none'}}}} onChange={{handleUpload}} />
               <span style={{{{background:'#EEF2FF',border:'1px solid #C7D2FE',color:'#6366F1',padding:'6px 14px',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',userSelect:'none'}}}}>↑ Upload Prices</span>
             </label>
             <Pill cls="info" text={{N_COUNTRIES+' markets'}} />
             <Pill cls="na" text={{N_PLANS+' packages'}} />
-          </div>
+          </div>}}
         </div>
 
         {{/* Upload banner */}}
@@ -608,10 +615,12 @@ function App() {{
         )}}
 
         {{/* PAGE CONTENT */}}
-        <div style={{{{padding:'24px 28px'}}}} className="page" key={{tab}}>
+        <div style={{{{padding:'24px 28px'}}}} className="page" key={{mode==='influencers'?'influencers':tab}}>
+
+          {{mode === 'influencers' && <InfluencerDashboard />}}
 
           {{/* ── OVERVIEW ── */}}
-          {{tab === 'overview' && <>
+          {{mode === 'pricing' && tab === 'overview' && <>
 
             {{/* KPI Row */}}
             <div style={{{{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:16,marginBottom:24}}}}>
@@ -907,7 +916,7 @@ function App() {{
           </>}}
 
           {{/* ── CHANGES ── */}}
-          {{tab === 'changes' && <>
+          {{mode === 'pricing' && tab === 'changes' && <>
             <div style={{{{display:'flex',gap:8,flexWrap:'wrap',marginBottom:16,alignItems:'center'}}}}>
               {{[['all','All Changes'],['up','↑ Increases'],['down','↓ Decreases']].map(([f,l]) => (
                 <button key={{f}} className={{'fbtn'+(filterMode===f?' on':'')}} onClick={{() => setFilterMode(f)}}>{{l}}</button>
@@ -939,7 +948,7 @@ function App() {{
           </>}}
 
           {{/* ── COMPARE ── */}}
-          {{tab === 'compare' && <>
+          {{mode === 'pricing' && tab === 'compare' && <>
             <div style={{{{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:16}}}}>
               <div style={{{{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap',flex:1}}}}>
                 <span style={{{{fontSize:11,color:'#94A3B8',fontWeight:600,letterSpacing:'.5px',textTransform:'uppercase',marginRight:4}}}}>Destination</span>
@@ -1032,7 +1041,7 @@ function App() {{
           </>}}
 
           {{/* ── AI ── */}}
-          {{tab === 'ai' && <>
+          {{mode === 'pricing' && tab === 'ai' && <>
             <div style={{{{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:20}}}}>
               <div className="card" style={{{{padding:24,borderTop:'3px solid #6366F1'}}}}>
                 <div style={{{{fontSize:15,fontWeight:700,color:'#1A1D2E',marginBottom:10}}}}>🧠 Strategic Analysis</div>
@@ -1060,7 +1069,7 @@ function App() {{
           </>}}
 
           {{/* ── REPORTS ── */}}
-          {{tab === 'reports' && <>
+          {{mode === 'pricing' && tab === 'reports' && <>
 
             <div style={{{{marginBottom:20}}}}>
               <div style={{{{fontSize:13,color:'#64748B'}}}}>Generate and download Excel reports of price changes.</div>
@@ -1171,8 +1180,6 @@ function App() {{
             )}}
 
           </>}}
-
-          {{tab === 'influencers' && <InfluencerDashboard />}}
 
         </div>
       </div>
