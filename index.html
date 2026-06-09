@@ -31,17 +31,17 @@ const N_DN=0;
 const N_CHANGES=0;
 const N_COUNTRIES=162;
 const N_PLANS=1061;
-const N_CHEAPER=610;
-const N_PRICIER=386;
-const N_NEEDS_UPDATE=334;
-const CHEAPER_PCT=61;
-const PRICIER_PCT=39;
-const STRONG_MARKETS=[{"country":"Belarus","adv":64,"plans":3},{"country":"Guam","adv":61,"plans":4},{"country":"Albania","adv":57,"plans":4},{"country":"Andorra","adv":57,"plans":4},{"country":"Hong Kong","adv":57,"plans":4},{"country":"New Zealand","adv":57,"plans":4},{"country":"Bangladesh","adv":56,"plans":4},{"country":"Serbia","adv":56,"plans":4},{"country":"Montenegro","adv":54,"plans":4},{"country":"North Macedonia","adv":52,"plans":3},{"country":"Bahrain","adv":51,"plans":4},{"country":"Gibraltar","adv":51,"plans":4}];
-const WEAK_MARKETS=[{"country":"Ghana","adv":-154,"plans":2},{"country":"Martinique","adv":-145,"plans":10},{"country":"Cameroon","adv":-132,"plans":2},{"country":"Congo","adv":-120,"plans":2},{"country":"Zambia","adv":-117,"plans":2},{"country":"Uganda","adv":-108,"plans":2},{"country":"Turks and Caicos Islands","adv":-93,"plans":7},{"country":"Monaco","adv":-80,"plans":2},{"country":"Brunei","adv":-76,"plans":2},{"country":"Tanzania","adv":-76,"plans":2},{"country":"Saint Martin","adv":-74,"plans":10},{"country":"British Virgin Islands","adv":-74,"plans":7}];
+const N_CHEAPER=336;
+const N_PRICIER=428;
+const N_NEEDS_UPDATE=327;
+const CHEAPER_PCT=44;
+const PRICIER_PCT=56;
+const STRONG_MARKETS=[{"country":"New Zealand","adv":64,"plans":2},{"country":"Hong Kong","adv":63,"plans":2},{"country":"Israel","adv":55,"plans":2},{"country":"Guam","adv":48,"plans":3},{"country":"Gibraltar","adv":45,"plans":1},{"country":"France","adv":41,"plans":8},{"country":"India","adv":37,"plans":8},{"country":"Austria","adv":35,"plans":8},{"country":"Albania","adv":31,"plans":2},{"country":"Bahrain","adv":31,"plans":2},{"country":"Denmark","adv":28,"plans":8},{"country":"Global","adv":28,"plans":8}];
+const WEAK_MARKETS=[{"country":"Ghana","adv":-234,"plans":2},{"country":"Tanzania","adv":-214,"plans":2},{"country":"Cameroon","adv":-194,"plans":2},{"country":"Martinique","adv":-159,"plans":9},{"country":"Zambia","adv":-158,"plans":2},{"country":"Uganda","adv":-145,"plans":2},{"country":"Costa Rica","adv":-126,"plans":2},{"country":"Congo","adv":-120,"plans":2},{"country":"Fiji","adv":-114,"plans":2},{"country":"Monaco","adv":-111,"plans":2},{"country":"United Kingdom","adv":-109,"plans":7},{"country":"Brunei","adv":-100,"plans":2}];
 const MAX_STRONG_ADV=64;
-const MAX_WEAK_ADV=154;
-const COMP_BREAKDOWN=[{"name":"airalo","cheaper":415,"equal":11,"pricier":430,"total":856},{"name":"holafly","cheaper":606,"equal":3,"pricier":191,"total":800},{"name":"esimo","cheaper":160,"equal":88,"pricier":18,"total":266},{"name":"saily","cheaper":239,"equal":20,"pricier":545,"total":804}];
-const ALERTS_OVERPRICED=[{"country":"Martinique","data":"Unlimited","days":30,"voye":99.0,"avg_comp":15.93,"gap":521},{"country":"United Kingdom","data":"Unlimited","days":30,"voye":63.0,"avg_comp":15.24,"gap":313},{"country":"Martinique","data":"Unlimited","days":20,"voye":79.0,"avg_comp":19.4,"gap":307},{"country":"Saint Martin","data":"Unlimited","days":30,"voye":99.0,"avg_comp":25.45,"gap":289},{"country":"Martinique","data":"Unlimited","days":15,"voye":69.0,"avg_comp":19.4,"gap":256},{"country":"Cayman Islands","data":"Unlimited","days":15,"voye":69.0,"avg_comp":20.5,"gap":237},{"country":"Georgia","data":"Unlimited","days":30,"voye":63.0,"avg_comp":18.76,"gap":236},{"country":"Asia","data":"Unlimited","days":30,"voye":65.0,"avg_comp":19.4,"gap":235}];
+const MAX_WEAK_ADV=234;
+const COMP_BREAKDOWN=[{"name":"airalo","cheaper":65,"equal":11,"pricier":317,"total":393},{"name":"holafly","cheaper":219,"equal":1,"pricier":183,"total":403},{"name":"esimo","cheaper":160,"equal":88,"pricier":18,"total":266},{"name":"saily","cheaper":196,"equal":20,"pricier":282,"total":498}];
+const ALERTS_OVERPRICED=[{"country":"Martinique","data":"Unlimited","days":30,"voye":99.0,"avg_comp":19.4,"gap":410},{"country":"United Kingdom","data":"Unlimited","days":30,"voye":63.0,"avg_comp":15.24,"gap":313},{"country":"Martinique","data":"Unlimited","days":20,"voye":79.0,"avg_comp":19.4,"gap":307},{"country":"Ghana","data":"3GB","days":7,"voye":41.0,"avg_comp":11.5,"gap":257},{"country":"Martinique","data":"Unlimited","days":15,"voye":69.0,"avg_comp":19.4,"gap":256},{"country":"Tanzania","data":"3GB","days":7,"voye":41.0,"avg_comp":11.99,"gap":242},{"country":"Cayman Islands","data":"Unlimited","days":15,"voye":69.0,"avg_comp":20.5,"gap":237},{"country":"Asia","data":"Unlimited","days":30,"voye":65.0,"avg_comp":19.4,"gap":235}];
 const ALERTS_MATCHES=[{"country":"Thailand","data":"Unlimited","days":7,"voye":19.0,"comp":"saily","comp_price":18.99},{"country":"South Korea","data":"Unlimited","days":10,"voye":30.0,"comp":"holafly","comp_price":29.9},{"country":"Brazil","data":"Unlimited","days":7,"voye":22.0,"comp":"saily","comp_price":21.99},{"country":"China","data":"Unlimited","days":15,"voye":23.0,"comp":"saily","comp_price":22.99},{"country":"Dominican Republic","data":"15GB","days":30,"voye":75.0,"comp":"esimo","comp_price":75.0},{"country":"Dominican Republic","data":"3GB","days":7,"voye":21.0,"comp":"saily","comp_price":20.99},{"country":"Dominican Republic","data":"5GB","days":15,"voye":30.0,"comp":"esimo","comp_price":30.0},{"country":"Peru","data":"15GB","days":30,"voye":75.0,"comp":"esimo","comp_price":75.0}];
 const ALERTS_STALE=["Albania","Algeria","Andorra","Anguilla","Antigua and Barbuda","Argentina","Armenia","Aruba","Asia","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Bermuda","Bolivia","Bosnia and Herzegovina","Brazil","British Virgin Islands","Brunei","Bulgaria","Cambodia","Cameroon","Canada","Caribbean","Cayman Islands","Chile","China","Colombia","Congo","Costa Rica","Cote D\u2019Ivoire (Ivory Coast)","Croatia","Cruises","Cyprus","Czech Republic","Denmark","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Estonia","Europe","Faroe Islands","Fiji","Finland","France","French Polynesia","French West Indies","Georgia","Germany","Ghana","Gibraltar","Global","Greece","Grenada","Guam","Guatemala","Guyana","Haiti","Honduras","Hong Kong","Hungary","Iceland","India","Indonesia","Ireland","Israel","Italy","Jamaica","Japan","Jersey / Guernsey","Jordan","Kazakhstan","Kenya","Kuwait","Laos","Latin America","Latvia","Liberia","Liechtenstein","Lithuania","Luxembourg","Macau","Madagascar","Malawi","Malaysia","Maldives","Malta","Martinique","Mauritius","Mayotte (Reunion)","Mexico","Middle East","Moldova","Monaco","Montenegro","Montserrat","Morocco","Mozambique","Nepal","Netherlands","Netherlands Antilles","New Zealand","Nigeria","North America","North Macedonia","Norway","Oman","Pakistan","Panama","Paraguay","Peru","Philippines","Poland","Portugal","Puerto Rico","Qatar","Reunion","Romania","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Martin","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","St. Vincent and The Grenadines","Suriname","Sweden","Switzerland","Taiwan","Tanzania","Thailand","Trinidad and Tobago","Tunisia","Turkey","Turks and Caicos Islands","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uzbekistan","Vietnam","Zambia"];
 const RECENT_UPDATES=[];
@@ -203,7 +203,7 @@ function App() {
           let cheapestComp = null;
           COMPETITORS.forEach(comp => {
             const cplans = (COMP_DATA[comp]||{})[country] || [];
-            const match = cplans.find(cp => cp.data === p.data) || cplans.find(cp => cp.days === p.days);
+            const match = cplans.find(cp => cp.data === p.data);
             if (match && match.price && (cheapestComp === null || match.price < cheapestComp)) cheapestComp = match.price;
           });
           if (!cheapestComp) return;
@@ -738,7 +738,7 @@ function App() {
                     const compPrices = COMPETITORS.map((comp,j) => {
                       const cKey = 'comp|'+comp+'|'+selCountry+'|'+(p.data||'')+'|'+p.days;
                       const cplans = (COMP_DATA[comp]||{})[selCountry] || [];
-                      const match = cplans.find(cp => cp.data === p.data) || cplans.find(cp => cp.days === p.days);
+                      const match = cplans.find(cp => cp.data === p.data);
                       const baseP = match ? match.price : null;
                       return manualEdits[cKey] !== undefined ? (parseFloat(manualEdits[cKey])||baseP) : baseP;
                     });
@@ -758,7 +758,7 @@ function App() {
                         {COMPETITORS.map((comp,j) => {
                           const cKey = 'comp|'+comp+'|'+selCountry+'|'+(p.data||'')+'|'+p.days;
                           const cplans = (COMP_DATA[comp]||{})[selCountry] || [];
-                          const match = cplans.find(cp => cp.data === p.data) || cplans.find(cp => cp.days === p.days);
+                          const match = cplans.find(cp => cp.data === p.data);
                           const baseCompP = match ? match.price : null;
                           const cp = compPrices[j];
                           const isEdited = manualEdits[cKey] !== undefined;
