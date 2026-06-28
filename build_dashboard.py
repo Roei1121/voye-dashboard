@@ -88,11 +88,8 @@ def build_changes(voye_data):
     return sorted(changes, key=lambda x: abs(x['pct']), reverse=True)
 
 def _match_comp_plan(plan, cplans):
-    """Find best matching competitor plan by data type then by days."""
-    m = next((cp for cp in cplans if cp.get('data') == plan.get('data')), None)
-    if not m:
-        m = next((cp for cp in cplans if cp.get('days') == plan.get('days')), None)
-    return m
+    """Match competitor plan by data size AND days — exact match only."""
+    return next((cp for cp in cplans if cp.get('data') == plan.get('data') and cp.get('days') == plan.get('days')), None)
 
 def build_competitive_analysis(voye_data, comp_data):
     n_cheaper = n_pricier = n_needs_update = 0
@@ -302,6 +299,20 @@ const {{ useState, useMemo, useCallback }} = React;
 
 const TOURIST_DESTS = ['United States','Italy','Greece','France','Georgia','United Kingdom','Cyprus','Germany','Thailand','United Arab Emirates','Vietnam','Philippines','Czech Republic','Hungary','Japan','Spain','Portugal','Netherlands','Romania','Poland','Austria','Europe','Asia','Mexico','Canada'];
 
+function findCompPrice(cplans, plan) {{
+  const exact = cplans.find(cp => cp.data === plan.data && cp.days === plan.days);
+  if (exact) return {{price: exact.price, estimated: false}};
+  if (!plan.data || plan.data === 'Unlimited') return null;
+  const voyeGB = parseFloat(plan.data);
+  if (isNaN(voyeGB)) return null;
+  const gbPlans = cplans.filter(cp => cp.data && cp.data !== 'Unlimited' && !isNaN(parseFloat(cp.data)) && cp.price > 0);
+  if (!gbPlans.length) return null;
+  const source = gbPlans.reduce((a,b) => Math.abs(parseFloat(a.data)-voyeGB) <= Math.abs(parseFloat(b.data)-voyeGB) ? a : b);
+  const sourceGB = parseFloat(source.data);
+  const costPerGB = source.price / sourceGB;
+  return {{price: Math.round(costPerGB*voyeGB*100)/100, estimated: true, sourceData: source.data, sourceDays: source.days, sourcePrice: source.price, costPerGB: Math.round(costPerGB*100)/100}};
+}}
+
 function Pill({{cls, text}}) {{
   const s = {{
     info:   {{background:'#DBEAFE',color:'#1E40AF'}},
@@ -449,8 +460,8 @@ function App() {{
           let cheapestComp = null;
           COMPETITORS.forEach(comp => {{
             const cplans = (COMP_DATA[comp]||{{}})[country] || [];
-            const match = cplans.find(cp => cp.data === p.data) || cplans.find(cp => cp.days === p.days);
-            if (match && match.price && (cheapestComp === null || match.price < cheapestComp)) cheapestComp = match.price;
+            const found = findCompPrice(cplans, p);
+            if (found && found.price && (cheapestComp === null || found.price < cheapestComp)) cheapestComp = found.price;
           }});
           if (!cheapestComp) return;
           const diffPct = Math.round((voyeP - cheapestComp) / cheapestComp * 100);
@@ -676,13 +687,12 @@ function App() {{
                       const plans = VOYE_DATA[dest] || [];
                       const plan = plans.find(p => (!touristPkgFilter || p.data === touristPkgFilter) && (!touristDaysFilter || p.days === touristDaysFilter));
                       const voyeP = plan ? (plan.new_price || plan.price) : null;
-                      const compPrices = COMPETITORS.map(comp => {{
+                      const compInfos = COMPETITORS.map(comp => {{
                         if (!plan) return null;
                         const cplans = (COMP_DATA[comp]||{{}})[dest] || [];
-                        const match = cplans.find(cp => cp.data === plan.data) || cplans.find(cp => cp.days === plan.days);
-                        return match ? match.price : null;
+                        return findCompPrice(cplans, plan);
                       }});
-                      const validComp = compPrices.filter(x => x !== null && x > 0);
+                      const validComp = compInfos.filter(x => x !== null && x.price > 0).map(x => x.price);
                       const avgComp = validComp.length ? validComp.reduce((a,b)=>a+b,0)/validComp.length : null;
                       const diffPct = avgComp && voyeP ? Math.round((voyeP - avgComp) / avgComp * 100) : null;
                       return (
@@ -693,13 +703,19 @@ function App() {{
                               ? <span style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:13,color:'#6366F1',fontWeight:700}}}}>${{voyeP.toFixed(2)}}</span>
                               : <span style={{{{color:'#CBD5E1',fontSize:11}}}}>—</span>}}
                           </td>
-                          {{compPrices.map((cp,j) => {{
+                          {{compInfos.map((info,j) => {{
+                            const cp = info ? info.price : null;
                             const cheaper = cp!=null && voyeP!=null && cp < voyeP;
                             const pricier = cp!=null && voyeP!=null && cp > voyeP;
+                            const comp = COMPETITORS[j];
+                            const tooltip = info && info.estimated ? `Estimated based on ${{comp}}'s ${{info.sourceData}}/${{info.sourceDays||'?'}}d plan at $${{info.sourcePrice.toFixed(2)}} = $${{info.costPerGB.toFixed(2)}}/GB` : '';
                             return (
                               <td key={{j}} style={{{{padding:'10px 16px',textAlign:'right'}}}}>
                                 {{cp != null
-                                  ? <span style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:13,color:cheaper?'#EF4444':pricier?'#10B981':'#94A3B8'}}}}>${{cp.toFixed(2)}}</span>
+                                  ? <span style={{{{display:'inline-flex',alignItems:'center',gap:2,justifyContent:'flex-end'}}}}>
+                                      <span style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:13,color:cheaper?'#EF4444':pricier?'#10B981':'#94A3B8'}}}}>${{cp.toFixed(2)}}</span>
+                                      {{info.estimated && <span title={{tooltip}} style={{{{cursor:'help',fontSize:10,lineHeight:1}}}}>⚠️</span>}}
+                                    </span>
                                   : <span style={{{{color:'#CBD5E1',fontSize:11}}}}>—</span>}}
                               </td>
                             );
@@ -981,14 +997,16 @@ function App() {{
                     const vKey = 'voye|'+selCountry+'|'+(p.data||'')+'|'+p.days;
                     const baseVoyeP = p.new_price || p.price;
                     const voyeP = manualEdits[vKey] !== undefined ? (parseFloat(manualEdits[vKey])||baseVoyeP) : baseVoyeP;
-                    const compPrices = COMPETITORS.map((comp,j) => {{
+                    const compInfos = COMPETITORS.map((comp,j) => {{
                       const cKey = 'comp|'+comp+'|'+selCountry+'|'+(p.data||'')+'|'+p.days;
                       const cplans = (COMP_DATA[comp]||{{}})[selCountry] || [];
-                      const match = cplans.find(cp => cp.data === p.data) || cplans.find(cp => cp.days === p.days);
-                      const baseP = match ? match.price : null;
-                      return manualEdits[cKey] !== undefined ? (parseFloat(manualEdits[cKey])||baseP) : baseP;
+                      const found = findCompPrice(cplans, p);
+                      const baseP = found ? found.price : null;
+                      const isEdited = manualEdits[cKey] !== undefined;
+                      const price = isEdited ? (parseFloat(manualEdits[cKey])||baseP) : baseP;
+                      return {{comp, cKey, price, baseP, isEdited, est: (!isEdited && found && found.estimated) ? found : null}};
                     }});
-                    const validPrices = compPrices.filter(x => x !== null && x > 0);
+                    const validPrices = compInfos.map(c=>c.price).filter(x => x !== null && x > 0);
                     const avgComp = validPrices.length ? validPrices.reduce((a,b)=>a+b,0)/validPrices.length : null;
                     const posPct = avgComp && voyeP ? Math.round((voyeP - avgComp) / avgComp * 100) : null;
                     return (
@@ -1001,23 +1019,21 @@ function App() {{
                             : <span style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:13,color:manualEdits[vKey]!==undefined?'#D97706':'#6366F1',fontWeight:700}}}}>${{voyeP!=null?voyeP?.toFixed(2) ?? "N/A":'—'}}</span>
                           }}
                         </td>
-                        {{COMPETITORS.map((comp,j) => {{
-                          const cKey = 'comp|'+comp+'|'+selCountry+'|'+(p.data||'')+'|'+p.days;
-                          const cplans = (COMP_DATA[comp]||{{}})[selCountry] || [];
-                          const match = cplans.find(cp => cp.data === p.data) || cplans.find(cp => cp.days === p.days);
-                          const baseCompP = match ? match.price : null;
-                          const cp = compPrices[j];
-                          const isEdited = manualEdits[cKey] !== undefined;
+                        {{compInfos.map(({{comp,cKey,price:cp,baseP,isEdited,est}},j) => {{
                           const cheaper = cp!=null && voyeP!=null && cp < voyeP;
                           const pricier = cp!=null && voyeP!=null && cp > voyeP;
+                          const tooltip = est ? `Estimated based on ${{comp}}'s ${{est.sourceData}}/${{est.sourceDays||'?'}}d plan at $${{est.sourcePrice.toFixed(2)}} = $${{est.costPerGB.toFixed(2)}}/GB` : '';
                           return (
                             <td key={{j}} style={{{{padding:'11px 16px',textAlign:'right'}}}}>
                               {{editMode
-                                ? (baseCompP !== null || isEdited)
-                                  ? <input type="number" step="0.01" style={{{{width:72,background:isEdited?'#FFFBEB':'#F8F9FC',border:'1px solid '+(isEdited?'#F59E0B':'#E2E8F0'),borderRadius:6,color:isEdited?'#D97706':(cheaper?'#EF4444':pricier?'#10B981':'#64748B'),padding:'4px 7px',fontSize:12,textAlign:'right',fontFamily:"'Roboto Mono',monospace",outline:'none'}}}} value={{isEdited ? manualEdits[cKey] : (baseCompP||'').toString()}} onChange={{e => setManualEdits(prev => ({{...prev, [cKey]: e.target.value}}))}} />
+                                ? (baseP !== null || isEdited)
+                                  ? <input type="number" step="0.01" style={{{{width:72,background:isEdited?'#FFFBEB':'#F8F9FC',border:'1px solid '+(isEdited?'#F59E0B':'#E2E8F0'),borderRadius:6,color:isEdited?'#D97706':(cheaper?'#EF4444':pricier?'#10B981':'#64748B'),padding:'4px 7px',fontSize:12,textAlign:'right',fontFamily:"'Roboto Mono',monospace",outline:'none'}}}} value={{isEdited ? manualEdits[cKey] : (baseP||'').toString()}} onChange={{e => setManualEdits(prev => ({{...prev, [cKey]: e.target.value}}))}} />
                                   : <span style={{{{color:'#CBD5E1',fontSize:11}}}}>—</span>
                                 : cp !== null
-                                  ? <span style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:13,color:isEdited?'#D97706':(cheaper?'#EF4444':pricier?'#10B981':'#94A3B8')}}}}>${{cp?.toFixed(2) ?? "N/A"}}</span>
+                                  ? <span style={{{{display:'inline-flex',alignItems:'center',gap:2,justifyContent:'flex-end'}}}}>
+                                      <span style={{{{fontFamily:"'Roboto Mono',monospace",fontSize:13,color:isEdited?'#D97706':(cheaper?'#EF4444':pricier?'#10B981':'#94A3B8')}}}}>${{cp.toFixed(2)}}</span>
+                                      {{est && <span title={{tooltip}} style={{{{cursor:'help',fontSize:10,lineHeight:1}}}}>⚠️</span>}}
+                                    </span>
                                   : <span style={{{{color:'#CBD5E1',fontSize:11}}}}>—</span>
                               }}
                             </td>
